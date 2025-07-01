@@ -1,0 +1,350 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+    <div class="module-header">
+        <h2>إدارة المدرسين</h2>
+        <button class="btn btn-primary" id="addTeacherBtn">
+        <a href="{% url "employ:create" %}" style="color:white;">إضافة مدرس جديد<i class="fas fa-plus"></i> </a>
+
+        </button>
+    </div>        
+
+    <div class="tabs">
+        <div class="tab active" data-tab="teachers">المدرسون النشطون</div>
+    </div>
+
+    <div class="filters">
+        <div class="form-row">
+            <div class="form-col">
+                <select id="subjectFilter" class="form-control">
+                    <option value="">جميع المواد</option>
+                    <option value="math">الرياضيات</option>
+                    <option value="science">العلوم</option>
+                    <option value="arabic">اللغة العربية</option>
+                    <option value="english">اللغة الإنجليزية</option>
+                    <option value="religion">التربية الإسلامية</option>
+                </select>
+            </div>
+            <div class="form-col">
+                <select id="statusFilter" class="form-control">
+                    <option value="">جميع الحالات</option>
+                    <option value="full-time">دوام كامل</option>
+                    <option value="part-time">دوام جزئي</option>
+                </select>
+            </div>
+            <div class="form-col">
+                <input type="text" id="searchInput" class="form-control" placeholder="بحث بالاسم...">
+            </div>
+        </div>
+    </div>
+
+    <div class="tab-content active" id="teachers-tab">
+        <div class="table-container">
+            <table id="teachersTable">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>الاسم الكامل</th>
+                        <th>المادة</th>
+                        <th>الفرع</th>
+                        <th>نوع العقد</th>
+                    </tr>
+                    <tr>
+                        {% for teacher in  teacher %}
+                        <th>#</th>
+                        <td>{{teacher.full_name}}</td>
+                        <td>{{teacher.subject}}</td>
+                        <td>{{teacher.branches}}</td>
+                        <td>{{teacher.contract_type}}</td>
+                    </tr>
+                    {% endfor %}
+                </thead>
+                <tbody>
+                    <!-- سيتم ملؤها بواسطة JavaScript -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="tab-content" id="inactive-tab">
+        <div class="table-container">
+            <table id="inactiveTeachersTable">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>الاسم الكامل</th>
+                        <th>المادة</th>
+                        <th>تاريخ إنهاء العقد</th>
+                        <th>سبب الإنهاء</th>
+                        <th>الإجراءات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- سيتم ملؤها بواسطة JavaScript -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- نموذج إضافة/تعديل مدرس -->
+    {% comment %} <div id="teacherModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+                <a href="{% url "employ:create" %}"><h3 id="teacherModalTitle">إضافة مدرس جديد</h3></a>
+            <form id="teacherForm">
+                <div class="form-row">
+                    <div class="form-col">
+                        <label for="teacherName">الاسم الكامل</label>
+                        <input type="text" id="teacherName" required>
+                    </div>
+                    <div class="form-col">
+                        <label for="teacherPhone">رقم الهاتف</label>
+                        <input type="tel" id="teacherPhone" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-col">
+                        <label for="teacherSubject">المادة</label>
+                        <select id="teacherSubject" required>
+                            <option value="">اختر المادة</option>
+                            <!-- المواد الأساسية -->
+                            <option value="math">الرياضيات</option>
+                            <option value="physics">الفيزياء</option>
+                            <option value="chemistry">الكيمياء</option>
+                            <option value="biology">علوم</option>
+                            <!-- اللغات -->
+                            <option value="arabic">اللغة العربية</option>
+                            <option value="english">اللغة الإنجليزية</option>
+                            <option value="french">اللغة الفرنسية</option>
+                            <!-- المواد الاجتماعية -->
+                            <option value="history">التاريخ</option>
+                            <option value="geography">الجغرافيا</option>
+                            <option value="philosophy">الفلسفة</option>
+                            <!-- المواد الدينية -->
+                            <option value="religion">التربية الإسلامية</option>
+
+                        </select>
+                    </div>
+                    <div class="form-col">
+                        <label for="teacherClasses">الفرع</label>
+                        <select id="teacherClasses" multiple>
+                            <option value="1">أدبي</option>
+                            <option value="2">علمي</option>
+                            <option value="3">تاسع</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-col">
+                        <label for="contractType"> مرحلة التدريس</label>
+                        <select id="contractType" required>
+                            <option value="full-time">بكلوريا</option>
+                            <option value="part-time">تاسع</option>
+                            <option value="hourly">مشترك</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-col">
+                        <label for="hireDate">تاريخ التعيين</label>
+                        <input type="date" id="hireDate" required>
+                    </div>
+                    <div class="form-col">
+                        <label for="teacherId">رقم الهوية</label>
+                        <input type="text" id="teacherId" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-col">
+                        <label for="teacherNotes">ملاحظات</label>
+                        <textarea id="teacherNotes" rows="3"></textarea>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">حفظ</button>
+            </form>
+        </div>
+    </div> {% endcomment %}
+
+    <!-- نموذج إنهاء عقد مدرس -->
+    <!-- <div id="deactivateModal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h3>إنهاء عقد المدرس</h3>
+        <form id="deactivateForm">
+            <div class="form-row">
+                <div class="form-col">
+                    <label for="endDate">تاريخ إنهاء العقد</label>
+                    <input type="date" id="endDate" required>
+                </div>
+                <div class="form-col">
+                    <label for="deactivateReason">سبب الإنهاء</label>
+                    <select id="deactivateReason" required>
+                        <option value="">اختر السبب</option>
+                        <option value="resignation">استقالة</option>
+                        <option value="termination">إنهاء خدمة</option>
+                        <option value="contract-end">انتهاء العقد</option>
+                        <option value="other">أخرى</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-col">
+                    <label for="deactivateNotes">ملاحظات</label>
+                    <textarea id="deactivateNotes" rows="3"></textarea>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-danger">تأكيد الإنهاء</button>
+        </form>
+    </div>
+</div> -->
+
+    <!-- نموذج جدول المدرس -->
+    <div id="scheduleModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3 id="scheduleModalTitle">جدول المدرس</h3>
+            <div class="table-container">
+                <table id="scheduleTable">
+                    <thead>
+                        <tr>
+                            <th>اليوم</th>
+                            <th>الصف</th>
+                            <th>الحصة</th>
+                            <th>الوقت</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- سيتم ملؤها بواسطة JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const addTeacherBtn = document.getElementById('addTeacherBtn');
+            const teacherModal = document.getElementById('teacherModal');
+            const scheduleModal = document.getElementById('scheduleModal');
+            const closeButtons = document.querySelectorAll('.close');
+            const teacherForm = document.getElementById('teacherForm');
+
+            let teachers = [];
+            let inactiveTeachers = [];
+
+            addTeacherBtn.addEventListener('click', () => {
+                document.getElementById('teacherModalTitle').textContent = 'إضافة مدرس جديد';
+                teacherForm.reset();
+                teacherModal.style.display = 'block';
+
+                teacherForm.onsubmit = function (e) {
+                    e.preventDefault();
+                    const teacherData = {
+                        id: teachers.length + 1,
+                        name: document.getElementById('teacherName').value,
+                        phone: document.getElementById('teacherPhone').value,
+                        subject: document.getElementById('teacherSubject').value,
+                        classes: Array.from(document.getElementById('teacherClasses').selectedOptions).map(o => o.value),
+                        contractType: document.getElementById('contractType').value,
+                        hireDate: document.getElementById('hireDate').value,
+                        teacherId: document.getElementById('teacherId').value,
+                        notes: document.getElementById('teacherNotes').value,
+                        active: true
+                    };
+                    teachers.push(teacherData);
+                    teacherModal.style.display = 'none';
+                    showNotification('تم حفظ بيانات المدرس بنجاح', 'success');
+                    console.log(teachers);
+                };
+            });
+
+            document.addEventListener('click', function (e) {
+                if (e.target.classList.contains('view-schedule')) {
+                    const id = parseInt(e.target.dataset.id);
+                    const teacher = teachers.find(t => t.id === id);
+                    if (teacher) {
+                        document.getElementById('scheduleModalTitle').textContent = `جدول المدرس ${teacher.name}`;
+                        scheduleModal.style.display = 'block';
+                    }
+                }
+
+                if (e.target.classList.contains('edit-teacher')) {
+                    const id = parseInt(e.target.dataset.id);
+                    const teacher = teachers.find(t => t.id === id);
+                    if (teacher) {
+                        document.getElementById('teacherModalTitle').textContent = 'تعديل بيانات المدرس';
+                        document.getElementById('teacherName').value = teacher.name;
+                        document.getElementById('teacherPhone').value = teacher.phone;
+                        document.getElementById('teacherSubject').value = teacher.subject;
+                        const classSelect = document.getElementById('teacherClasses');
+                        Array.from(classSelect.options).forEach(opt => {
+                            opt.selected = teacher.classes.includes(opt.value);
+                        });
+                        document.getElementById('contractType').value = teacher.contractType;
+                        document.getElementById('hireDate').value = teacher.hireDate;
+                        document.getElementById('teacherId').value = teacher.teacherId;
+                        document.getElementById('teacherNotes').value = teacher.notes;
+
+                        teacherModal.style.display = 'block';
+
+                        teacherForm.onsubmit = function (e) {
+                            e.preventDefault();
+                            Object.assign(teacher, {
+                                name: document.getElementById('teacherName').value,
+                                phone: document.getElementById('teacherPhone').value,
+                                subject: document.getElementById('teacherSubject').value,
+                                classes: Array.from(document.getElementById('teacherClasses').selectedOptions).map(o => o.value),
+                                contractType: document.getElementById('contractType').value,
+                                hireDate: document.getElementById('hireDate').value,
+                                teacherId: document.getElementById('teacherId').value,
+                                notes: document.getElementById('teacherNotes').value
+                            });
+                            teacherModal.style.display = 'none';
+                            showNotification('تم تحديث بيانات المدرس', 'success');
+                        };
+                    }
+                }
+
+                if (e.target.classList.contains('deactivate-teacher')) {
+                    const id = parseInt(e.target.dataset.id);
+                    const index = teachers.findIndex(t => t.id === id);
+                    if (index !== -1 && confirm('هل أنت متأكد من إنهاء عقد المدرس؟')) {
+                        const teacher = teachers.splice(index, 1)[0];
+                        teacher.active = false;
+                        teacher.endDate = new Date().toISOString().split('T')[0];
+                        teacher.endReason = 'إنهاء خدمة';
+                        inactiveTeachers.push(teacher);
+                        showNotification('تم إنهاء عقد المدرس', 'success');
+                        console.log('نشطين:', teachers);
+                        console.log('منتهيين:', inactiveTeachers);
+                    }
+                }
+            });
+
+            closeButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    teacherModal.style.display = 'none';
+                    scheduleModal.style.display = 'none';
+                });
+            });
+
+            window.addEventListener('click', (e) => {
+                if (e.target === teacherModal) teacherModal.style.display = 'none';
+                if (e.target === scheduleModal) scheduleModal.style.display = 'none';
+            });
+
+            function showNotification(message, type) {
+                const note = document.createElement('div');
+                note.className = `notification ${type}`;
+                note.textContent = message;
+                document.body.appendChild(note);
+                setTimeout(() => note.remove(), 3000);
+            }
+        });
+    </script>
+
+
+{% endblock %}

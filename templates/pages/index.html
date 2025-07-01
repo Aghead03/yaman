@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+    {% if user.is_authenticated %}
+        <div class="header">
+            <h2 id="pageTitle"></h2>
+            <div class="breadcrumb" id="breadcrumb">
+                <span></span>
+            </div>
+        </div>
+        
+        <div id="moduleContent">
+            <!-- محتوى الوحدة سيتم تحميله هنا -->
+            <div class="dashboard-cards">
+                <div class="card">
+                    <div class="card-title">عدد الطلاب</div>
+                    <div class="card-value" id="studentsCount">0</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">عدد المدرسين</div>
+                    <div class="card-value" id="teachersCount">0</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">الدخل الشهري</div>
+                    <div class="card-value" id="monthlyIncome">0</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">المصروفات الشهرية</div>
+                    <div class="card-value" id="monthlyExpenses">0</div>
+                </div>
+            </div>
+            
+            <div class="recent-activity">
+                <h3>النشاط الأخير</h3>
+                <div class="table-container">
+                    <table id="activityTable">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>النشاط</th>
+                                <th>المستخدم</th>
+                                <th>الوقت</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- سيتم ملؤها بواسطة JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    {% else %}  
+    
+    {% endif %}
+{% endblock %}

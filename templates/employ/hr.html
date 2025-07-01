@@ -1,0 +1,374 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+    <div class="module-header">
+        <h2>إدارة الموظفين</h2>
+        <button class="btn btn-primary" id="addEmployeeBtn">
+            <i class="fas fa-plus"></i> إضافة موظف
+        </button>
+    </div>
+
+    <div class="tabs">
+        <div class="tab active" data-tab="employees">الموظفون النشطون</div>
+        <div class="tab" data-tab="inactive">الموظفون السابقون</div>
+        <div class="tab" data-tab="attendance">حضور الموظفين</div>
+    </div>
+
+    <div class="filters">
+        <div class="form-row">
+            <div class="form-col">
+                <select id="positionFilter" class="form-control">
+                    <option value="">جميع الوظائف</option>
+                    <option value="teacher">مدرس</option>
+                    <option value="admin">إداري</option>
+                    <option value="accountant">محاسب</option>
+                    <option value="manager">مدير</option>
+                    <option value="other">أخرى</option>
+                </select>
+            </div>
+            <div class="form-col">
+                <input type="text" id="searchInput" class="form-control" placeholder="بحث بالاسم...">
+            </div>
+        </div>
+    </div>
+
+    <div class="tab-content active" id="employees-tab">
+        <div class="table-container">
+            <table id="employeesTable">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>الاسم الكامل</th>
+                        <th>الوظيفة</th>
+                        <th>تاريخ التعيين</th>
+                        <th>الراتب</th>
+                        <th>ساعات العمل</th>
+                        <th>الإجراءات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- سيتم ملؤها بواسطة JavaScript -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="tab-content" id="inactive-tab">
+        <div class="table-container">
+            <table id="inactiveEmployeesTable">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>الاسم الكامل</th>
+                        <th>الوظيفة</th>
+                        <th>تاريخ المغادرة</th>
+                        <th>سبب المغادرة</th>
+                        <th>الإجراءات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- سيتم ملؤها بواسطة JavaScript -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="tab-content" id="attendance-tab">
+        <div class="filters">
+            <div class="form-row">
+                <div class="form-col">
+                    <input type="date" id="attendanceDate" class="form-control">
+                </div>
+                <div class="form-col">
+                    <button class="btn btn-info" id="filterAttendanceBtn">
+                        <i class="fas fa-filter"></i> تصفية
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table id="employeeAttendanceTable">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>الموظف</th>
+                        <th>الوظيفة</th>
+                        <th>حالة الحضور</th>
+                        <th>وقت الدخول</th>
+                        <th>وقت الخروج</th>
+                        <th>ساعات العمل</th>
+                        <th>ملاحظات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- سيتم ملؤها بواسطة JavaScript -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- نموذج إضافة/تعديل موظف -->
+    <div id="employeeModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3 id="employeeModalTitle">إضافة موظف جديد</h3>
+            <form id="employeeForm">
+                <div class="form-row">
+                    <div class="form-col">
+                        <label for="employeeName">الاسم الكامل</label>
+                        <input type="text" id="employeeName" required>
+                    </div>
+                    <div class="form-col">
+                        <label for="employeeId">رقم الهوية</label>
+                        <input type="text" id="employeeId" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-col">
+                        <label for="employeePosition">الوظيفة</label>
+                        <select id="employeePosition" required>
+                            <option value="">اختر الوظيفة</option>
+                            <option value="teacher">مدرس</option>
+                            <option value="admin">إداري</option>
+                            <option value="accountant">محاسب</option>
+                            <option value="manager">مدير</option>
+                            <option value="other">أخرى</option>
+                        </select>
+                    </div>
+                    <div class="form-col">
+                        <label for="employeePhone">رقم الهاتف</label>
+                        <input type="tel" id="employeePhone" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-col">
+                        <label for="employeeSalary">الراتب</label>
+                        <input type="number" id="employeeSalary" required>
+                    </div>
+                    <div class="form-col">
+                        <label for="employeeHours">ساعات العمل الأسبوعية</label>
+                        <input type="number" id="employeeHours" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-col">
+                        <label for="employeeHireDate">تاريخ التعيين</label>
+                        <input type="date" id="employeeHireDate" required>
+                    </div>
+                    <div class="form-col">
+                        <label for="employeeStatus">الحالة</label>
+                        <select id="employeeStatus" required>
+                            <option value="active">نشط</option>
+                            <option value="inactive">غير نشط</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-col">
+                        <label for="employeeNotes">ملاحظات</label>
+                        <textarea id="employeeNotes" rows="3"></textarea>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary">حفظ</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- نموذج إنهاء خدمة موظف -->
+    <div id="terminateModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3>إنهاء خدمة موظف</h3>
+            <form id="terminateForm">
+                <div class="form-row">
+                    <div class="form-col">
+                        <label for="terminationDate">تاريخ إنهاء الخدمة</label>
+                        <input type="date" id="terminationDate" required>
+                    </div>
+                    <div class="form-col">
+                        <label for="terminationReason">سبب إنهاء الخدمة</label>
+                        <select id="terminationReason" required>
+                            <option value="">اختر السبب</option>
+                            <option value="resignation">استقالة</option>
+                            <option value="termination">إنهاء خدمة</option>
+                            <option value="retirement">تقاعد</option>
+                            <option value="other">أخرى</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-col">
+                        <label for="terminationNotes">ملاحظات</label>
+                        <textarea id="terminationNotes" rows="3"></textarea>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-danger">تأكيد إنهاء الخدمة</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- نموذج تسجيل الحضور -->
+    <div id="checkinModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3>تسجيل حضور الموظف</h3>
+            <form id="checkinForm">
+                <div class="form-row">
+                    <div class="form-col">
+                        <label for="checkinEmployee">الموظف</label>
+                        <select id="checkinEmployee" required>
+                            <option value="">اختر الموظف</option>
+                            <!-- سيتم ملؤها بواسطة JavaScript -->
+                        </select>
+                    </div>
+                    <div class="form-col">
+                        <label for="checkinDate">التاريخ</label>
+                        <input type="date" id="checkinDate" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-col">
+                        <label for="checkinTime">وقت الدخول</label>
+                        <input type="time" id="checkinTime" required>
+                    </div>
+                    <div class="form-col">
+                        <label for="checkoutTime">وقت الخروج</label>
+                        <input type="time" id="checkoutTime">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-col">
+                        <label for="checkinStatus">حالة الحضور</label>
+                        <select id="checkinStatus" required>
+                            <option value="present">حاضر</option>
+                            <option value="absent">غائب</option>
+                            <option value="late">متأخر</option>
+                            <option value="vacation">إجازة</option>
+                        </select>
+                    </div>
+                    <div class="form-col">
+                        <label for="checkinNotes">ملاحظات</label>
+                        <input type="text" id="checkinNotes">
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary">حفظ</button>
+            </form>
+        </div>
+    </div>
+    <script>
+document.addEventListener('DOMContentLoaded', function() {
+    // عناصر الأزرار والنوافذ المنبثقة
+    const addEmployeeBtn = document.getElementById('addEmployeeBtn');
+    const filterAttendanceBtn = document.getElementById('filterAttendanceBtn');
+    const tabs = document.querySelectorAll('.tab');
+    const tabContents = document.querySelectorAll('.tab-content');
+    const employeeModal = document.getElementById('employeeModal');
+    const terminateModal = document.getElementById('terminateModal');
+    const checkinModal = document.getElementById('checkinModal');
+    const closeButtons = document.querySelectorAll('.close');
+
+    // تعيين التاريخ الحالي كقيمة افتراضية
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('attendanceDate').value = today;
+    document.getElementById('employeeHireDate').value = today;
+    document.getElementById('terminationDate').value = today;
+    document.getElementById('checkinDate').value = today;
+
+    // فتح نافذة إضافة موظف
+    addEmployeeBtn.addEventListener('click', function() {
+        document.getElementById('employeeModalTitle').textContent = 'إضافة موظف جديد';
+        employeeModal.style.display = 'block';
+    });
+
+    // زر تصفية الحضور
+    filterAttendanceBtn.addEventListener('click', function() {
+        console.log('تم تطبيق تصفية الحضور');
+        // يمكن إضافة وظيفة التصفية هنا لاحقاً
+    });
+
+    // تبديل التبويبات
+    tabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+            const tabId = this.getAttribute('data-tab');
+            
+            // تحديد التبويب النشط
+            tabs.forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+            
+            // إظهار المحتوى المناسب
+            tabContents.forEach(content => {
+                content.classList.remove('active');
+                if (content.id === `${tabId}-tab`) {
+                    content.classList.add('active');
+                }
+            });
+        });
+    });
+
+    // فتح نافذة إنهاء خدمة موظف (مثال)
+    function openTerminateModal(employeeId) {
+        // يمكن استدعاء هذه الدالة عند النقر على زر إنهاء الخدمة في الصف
+        terminateModal.style.display = 'block';
+        console.log('إنهاء خدمة الموظف رقم:', employeeId);
+    }
+
+    // فتح نافذة تسجيل الحضور (مثال)
+    function openCheckinModal(employeeId) {
+        // يمكن استدعاء هذه الدالة عند النقر على زر تسجيل الحضور في الصف
+        checkinModal.style.display = 'block';
+        console.log('تسجيل حضور الموظف رقم:', employeeId);
+    }
+
+    // إغلاق النوافذ المنبثقة
+    closeButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            employeeModal.style.display = 'none';
+            terminateModal.style.display = 'none';
+            checkinModal.style.display = 'none';
+        });
+    });
+
+    // إغلاق النوافذ عند النقر خارجها
+    window.addEventListener('click', function(event) {
+        if (event.target === employeeModal) {
+            employeeModal.style.display = 'none';
+        }
+        if (event.target === terminateModal) {
+            terminateModal.style.display = 'none';
+        }
+        if (event.target === checkinModal) {
+            checkinModal.style.display = 'none';
+        }
+    });
+
+    // مثال لربط أحداث الأزرار في الجدول (يمكن تطويره لاحقاً)
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('edit-btn')) {
+            // زر تعديل موظف
+            document.getElementById('employeeModalTitle').textContent = 'تعديل بيانات الموظف';
+            employeeModal.style.display = 'block';
+            console.log('تعديل الموظف:', e.target.dataset.id);
+        }
+        else if (e.target.classList.contains('terminate-btn')) {
+            // زر إنهاء خدمة
+            openTerminateModal(e.target.dataset.id);
+        }
+        else if (e.target.classList.contains('checkin-btn')) {
+            // زر تسجيل حضور
+            openCheckinModal(e.target.dataset.id);
+        }
+    });
+});
+    </script>
+{% endblock %}

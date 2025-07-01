@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div id="teacherModal" class="modal" style="display: block;">  <!-- إظهار الفورم مباشرة -->
+    <div class="modal-content">
+        <h3>إضافة مدرس جديد</h3>
+        <form method="POST" id="teacherForm">
+            {% csrf_token %}
+            
+            <!-- عرض الأخطاء -->
+            {% if form.errors %}
+                <div class="alert alert-danger">
+                    {% for field, errors in form.errors.items %}
+                        {% for error in errors %}
+                            <p>{{ error }}</p>
+                        {% endfor %}
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <div class="form-row">
+                <div class="form-col">
+                    {{ form.full_name.label_tag }}
+                    {{ form.full_name }}
+                </div>
+                <div class="form-col">
+                    {{ form.phone_number.label_tag }}
+                    {{ form.phone_number }}
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-col">
+                    {{ form.subject.label_tag }}
+                    {{ form.subject }}
+                </div>
+                <div class="form-col">
+                    {{ form.branches.label_tag }}
+                    {{ form.branches }}
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-col">
+                    {{ form.contract_type.label_tag }}
+                    {{ form.contract_type }}
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-col">
+                    {{ form.hire_date.label_tag }}
+                    {{ form.hire_date }}
+                </div>
+                <div class="form-col">
+                    {{ form.id_number.label_tag }}
+                    {{ form.id_number }}
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-col">
+                    {{ form.notes.label_tag }}
+                    {{ form.notes }}
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary">حفظ</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

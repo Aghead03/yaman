@@ -1,0 +1,636 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+    <div class="module-header">
+        <h2>الملف الشخصي للطالب</h2>
+        <div class="header-actions">
+            <button class="btn btn-primary" id="addCourseBtn">
+                <i class="fas fa-plus"></i> إضافة دورة جديدة
+            </button>
+            <button class="btn btn-secondary" id="transferStudentBtn">
+                <i class="fas fa-exchange-alt"></i> نقل إلى صف/مجموعة جديدة
+            </button>
+            <button class="btn btn-danger" id="printReceiptBtn">
+                <i class="fas fa-print"></i> طباعة إيصال
+            </button>
+        </div>
+    </div>
+    <div class="student-profile-container">
+        <div class="profile-sidebar">
+            <div class="student-card">
+                <div class="student-avatar">
+                    <img src="../img/default-avatar.png" alt="صورة الطالب">
+                    <button class="edit-avatar">
+                        <i class="fas fa-camera"></i>
+                    </button>
+                </div>
+                <div class="student-info">
+                    <h3 id="studentName"> {{student.full_name}}</h3>
+                    <p class="student-id">رقم الطالب: <span id="studentId">{{student.student_number}}</span></p>
+                    <p class="student-class">الصف الحالي: <span id="currentClass">{{student.branch}} </span></p>
+                    <p class="join-date">تاريخ التسجيل: <span id="joinDate">{{student.registration_date}}</span></p>
+                </div>
+            </div>
+
+            <div class="student-stats">
+                <div class="stat-item">
+                    <i class="fas fa-book-open"></i>
+                    <div>
+                        <h4>الدورات المسجلة</h4>
+                        <p id="coursesCount">5</p>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <i class="fas fa-check-circle"></i>
+                    <div>
+                        <h4>الدورات المكتملة</h4>
+                        <p id="completedCourses">3</p>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <i class="fas fa-percentage"></i>
+                    <div>
+                        <h4>نسبة الحضور</h4>
+                        <p id="attendanceRate">85%</p>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <i class="fas fa-star"></i>
+                    <div>
+                        <h4>المعدل العام</h4>
+                        <p id="averageGrade">92.5</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="profile-content">
+            <div class="tabs">
+                <div class="tab active" data-tab="info">المعلومات الأساسية</div>
+                <div class="tab" data-tab="courses">الدورات المسجلة</div>
+                <div class="tab" data-tab="grades">العلامات والتقييمات</div>
+                <div class="tab" data-tab="attendance">سجل الحضور</div>
+                <div class="tab" data-tab="payments">سجل الدفعات</div>
+            </div>
+
+            <div class="tab-content active" id="info-tab">
+                <!-- محتوى المعلومات الأساسية -->
+                <div class="info-section">
+                    <h4 class="section-title">المعلومات الشخصية</h4>
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label>الاسم الكامل</label>
+                            <p id="fullName">{{student.full_name}}</p>
+                        </div>
+                        <div class="form-col">
+                            <label>تاريخ الميلاد</label>
+                            <p id="birthDate">{{student.birth_date}}</p>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label>الجنس</label>
+                            <p id="gender">{{student.gender}}</p>
+                        </div>
+                        <div class="form-col">
+                            <label>الجنسية</label>
+                            <p id="nationality">{{student.nationality}}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="info-section">
+                    <h4 class="section-title">معلومات التواصل</h4>
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label>رقم هاتف الأب</label>
+                            <p id="fatherPhone">{{student.father_phone}}</p>
+                        </div>
+                        <div class="form-col">
+                            <label>رقم هاتف الأم</label>
+                            <p id="motherPhone">{{student.mother_phone}}</p>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label>العنوان</label>
+                            <p id="address">{{student.address}}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-section">
+                    <h4 class="section-title">معلومات الدراسة</h4>
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label>المدرسة السابقة</label>
+                            <p id="school">{{student.previous_school}}</p>
+                        </div>
+                        <div class="form-col">
+                            <label>الصف الدراسي</label>
+                            <p id="schoolClass"> {{student.branch}}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-content" id="courses-tab">
+                <div class="table-container">
+                    <table id="coursesTable">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>اسم الدورة</th>
+                                <th>المجموعة</th>
+                                <th>تاريخ البدء</th>
+                                <th>تاريخ الانتهاء</th>
+                                <th>الحالة</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>1</td>
+                                <td>اللغة الإنجليزية - المستوى الأول</td>
+                                <td>مجموعة A</td>
+                                <td>01/10/2023</td>
+                                <td>30/12/2023</td>
+                                <td><span class="badge completed">مكتملة</span></td>
+                                <td>
+                                    <button class="btn btn-sm btn-info"><i class="fas fa-eye"></i></button>
+                                    <button class="btn btn-sm btn-danger"><i class="fas fa-trash"></i></button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>2</td>
+                                <td>الرياضيات - المستوى الثاني</td>
+                                <td>مجموعة B</td>
+                                <td>15/01/2024</td>
+                                <td>30/03/2024</td>
+                                <td><span class="badge active">نشطة</span></td>
+                                <td>
+                                    <button class="btn btn-sm btn-info"><i class="fas fa-eye"></i></button>
+                                    <button class="btn btn-sm btn-danger"><i class="fas fa-trash"></i></button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="tab-content" id="grades-tab">
+                <div class="table-container">
+                    <table id="gradesTable">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>المادة</th>
+                                <th>نوع التقييم</th>
+                                <th>العلامة</th>
+                                <th>النسبة</th>
+                                <th>التاريخ</th>
+                                <th>ملاحظات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>1</td>
+                                <td>اللغة الإنجليزية</td>
+                                <td>اختبار نهائي</td>
+                                <td>18/20</td>
+                                <td>90%</td>
+                                <td>25/12/2023</td>
+                                <td>أداء ممتاز</td>
+                            </tr>
+                            <tr>
+                                <td>2</td>
+                                <td>الرياضيات</td>
+                                <td>اختبار شهري</td>
+                                <td>15/20</td>
+                                <td>75%</td>
+                                <td>15/02/2024</td>
+                                <td>يحتاج لتحسين في الجبر</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="tab-content" id="attendance-tab">
+                <div class="filters">
+                    <div class="form-row">
+                        <div class="form-col">
+                            <select id="attendanceMonth" class="form-control">
+                                <option value="">كل الأشهر</option>
+                                <option value="1">يناير</option>
+                                <option value="2">فبراير</option>
+                                <!-- باقي الأشهر -->
+                            </select>
+                        </div>
+                        <div class="form-col">
+                            <select id="attendanceCourse" class="form-control">
+                                <option value="">كل الدورات</option>
+                                <option value="1">اللغة الإنجليزية</option>
+                                <option value="2">الرياضيات</option>
+                            </select>
+                        </div>
+                        <div class="form-col">
+                            <button class="btn btn-info"><i class="fas fa-filter"></i> تصفية</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table id="attendanceTable">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>التاريخ</th>
+                                <th>الدورة</th>
+                                <th>الحضور</th>
+                                <th>ملاحظات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>1</td>
+                                <td>10/01/2024</td>
+                                <td>الرياضيات - المستوى الثاني</td>
+                                <td><span class="badge present">حاضر</span></td>
+                                <td>-</td>
+                            </tr>
+                            <tr>
+                                <td>2</td>
+                                <td>12/01/2024</td>
+                                <td>الرياضيات - المستوى الثاني</td>
+                                <td><span class="badge absent">غائب</span></td>
+                                <td>إجازة مرضية</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="tab-content" id="payments-tab">
+                <div class="table-container">
+                    <table id="paymentsTable">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>رقم الإيصال</th>
+                                <th>الدورة</th>
+                                <th>المبلغ</th>
+                                <th>تاريخ الدفع</th>
+                                <th>طريقة الدفع</th>
+                                <th>حالة الدفع</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>1</td>
+                                <td>INV-2024-001</td>
+                                <td>اللغة الإنجليزية - المستوى الأول</td>
+                                <td>50,000 ل.س</td>
+                                <td>01/10/2023</td>
+                                <td>نقدي</td>
+                                <td><span class="badge paid">مدفوع</span></td>
+                                <td>
+                                    <button class="btn btn-sm btn-info"><i class="fas fa-print"></i></button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>2</td>
+                                <td>INV-2024-002</td>
+                                <td>الرياضيات - المستوى الثاني</td>
+                                <td>60,000 ل.س</td>
+                                <td>15/01/2024</td>
+                                <td>تحويل بنكي</td>
+                                <td><span class="badge pending">قيد الانتظار</span></td>
+                                <td>
+                                    <button class="btn btn-sm btn-info"><i class="fas fa-print"></i></button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- نموذج إضافة دورة جديدة -->
+    <div id="addCourseModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3>إضافة دورة جديدة للطالب</h3>
+            <form id="addCourseForm">
+                <div class="form-row">
+                    <div class="form-col">
+                        <label for="courseSelect">اختر الدورة</label>
+                        <select id="courseSelect" required>
+                            <option value="">اختر الدورة</option>
+                            <option value="1">اللغة الإنجليزية - المستوى الأول</option>
+                            <option value="2">الرياضيات - المستوى الثاني</option>
+                            <option value="3">البرمجة للمبتدئين</option>
+                        </select>
+                    </div>
+                    <div class="form-col">
+                        <label for="groupSelect">اختر المجموعة</label>
+                        <select id="groupSelect" required>
+                            <option value="">اختر المجموعة</option>
+                            <option value="1">مجموعة A - صباحية</option>
+                            <option value="2">مجموعة B - مسائية</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-col">
+                        <label for="courseStartDate">تاريخ البدء</label>
+                        <input type="date" id="courseStartDate" required>
+                    </div>
+                    <div class="form-col">
+                        <label for="courseEndDate">تاريخ الانتهاء</label>
+                        <input type="date" id="courseEndDate" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-col">
+                        <label for="courseFees">رسوم الدورة</label>
+                        <input type="number" id="courseFees" required>
+                    </div>
+                    <div class="form-col">
+                        <label for="discount">الخصم (إن وجد)</label>
+                        <input type="number" id="discount" value="0">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-col">
+                        <label for="paymentMethod">طريقة الدفع</label>
+                        <select id="paymentMethod" required>
+                            <option value="">اختر طريقة الدفع</option>
+                            <option value="cash">نقدي</option>
+                            <option value="bank">تحويل بنكي</option>
+                            <option value="installment">تقسيط</option>
+                        </select>
+                    </div>
+                    <div class="form-col">
+                        <label for="paymentStatus">حالة الدفع</label>
+                        <select id="paymentStatus" required>
+                            <option value="paid">مدفوع</option>
+                            <option value="partial">جزئي</option>
+                            <option value="pending">قيد الانتظار</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-col">
+                        <label for="courseNotes">ملاحظات</label>
+                        <textarea id="courseNotes" rows="3"></textarea>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary">حفظ</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- نموذج نقل الطالب -->
+    <div id="transferModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3>نقل الطالب</h3>
+            <form id="transferForm">
+                <div class="form-row">
+                    <div class="form-col">
+                        <label for="transferType">نوع النقل</label>
+                        <select id="transferType" required>
+                            <option value="">اختر نوع النقل</option>
+                            <option value="group">مجموعة جديدة</option>
+                            <option value="class">صف جديد</option>
+                        </select>
+                    </div>
+                    <div class="form-col">
+                        <label for="newGroup">المجموعة/الصف الجديد</label>
+                        <select id="newGroup" required>
+                            <option value="">اختر المجموعة/الصف</option>
+                            <option value="1">مجموعة C - صباحية</option>
+                            <option value="2">الصف الرابع</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-col">
+                        <label for="transferDate">تاريخ النقل</label>
+                        <input type="date" id="transferDate" required>
+                    </div>
+                    <div class="form-col">
+                        <label for="transferReason">سبب النقل</label>
+                        <select id="transferReason">
+                            <option value="">اختر السبب</option>
+                            <option value="request">طلب ولي الأمر</option>
+                            <option value="level">تقدم في المستوى</option>
+                            <option value="other">أخرى</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-col">
+                        <label for="transferNotes">ملاحظات</label>
+                        <textarea id="transferNotes" rows="3"></textarea>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary">تأكيد النقل</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- نموذج طباعة الإيصال -->
+    <div id="receiptModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3>إيصال الدفع</h3>
+            <div class="receipt-container">
+                <div class="receipt-header">
+                    <img src="../img/logo.png" alt="المعهد" class="receipt-logo">
+                    <h4>معهد اليمان</h4>
+                    <p>سجل تجاري: 12345</p>
+                    <p>هاتف: +963 11 123 4567</p>
+                </div>
+
+                <div class="receipt-body">
+                    <div class="receipt-row">
+                        <span>رقم الإيصال:</span>
+                        <span id="receiptNumber">INV-2024-003</span>
+                    </div>
+                    <div class="receipt-row">
+                        <span>التاريخ:</span>
+                        <span id="receiptDate">15/02/2024</span>
+                    </div>
+                    <div class="receipt-row">
+                        <span>اسم الطالب:</span>
+                        <span id="receiptStudent">محمد أحمد محمد</span>
+                    </div>
+                    <div class="receipt-row">
+                        <span>الدورة:</span>
+                        <span id="receiptCourse">الرياضيات - المستوى الثاني</span>
+                    </div>
+                    <div class="receipt-row">
+                        <span>المبلغ:</span>
+                        <span id="receiptAmount">60,000 ل.س</span>
+                    </div>
+                    <div class="receipt-row">
+                        <span>طريقة الدفع:</span>
+                        <span id="receiptMethod">نقدي</span>
+                    </div>
+                    <div class="receipt-row">
+                        <span>حالة الدفع:</span>
+                        <span id="receiptStatus" class="paid">مدفوع</span>
+                    </div>
+                </div>
+
+                <div class="receipt-footer">
+                    <p>شكراً لثقتكم بمعهد اليمان</p>
+                    <p>هذا الإيصال صالح كسند قبض رسمي</p>
+                </div>
+            </div>
+
+            <div class="receipt-actions">
+                <button class="btn btn-primary" id="printReceipt"><i class="fas fa-print"></i> طباعة</button>
+                <button class="btn btn-secondary" id="downloadReceipt"><i class="fas fa-download"></i> تحميل
+                    PDF</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // تعريف المتغيرات للعناصر الرئيسية
+            const addCourseModal = document.getElementById('addCourseModal');
+            const transferModal = document.getElementById('transferModal');
+            const receiptModal = document.getElementById('receiptModal');
+
+            // زر إضافة دورة جديدة
+            const addCourseBtn = document.getElementById('addCourseBtn');
+            if (addCourseBtn) {
+                addCourseBtn.addEventListener('click', function () {
+                    addCourseModal.style.display = 'block';
+                });
+            }
+
+            // زر نقل الطالب
+            const transferStudentBtn = document.getElementById('transferStudentBtn');
+            if (transferStudentBtn) {
+                transferStudentBtn.addEventListener('click', function () {
+                    transferModal.style.display = 'block';
+                });
+            }
+
+            // زر طباعة الإيصال
+            const printReceiptBtn = document.getElementById('printReceiptBtn');
+            if (printReceiptBtn) {
+                printReceiptBtn.addEventListener('click', function () {
+                    receiptModal.style.display = 'block';
+                });
+            }
+
+            // زر الطباعة داخل نافذة الإيصال
+            const printReceipt = document.getElementById('printReceipt');
+            if (printReceipt) {
+                printReceipt.addEventListener('click', function () {
+                    // هنا سيتم تنفيذ أمر الطباعة الفعلي
+                    window.print();
+                });
+            }
+
+            // إغلاق النوافذ المنبثقة عند النقر على الزر ×
+            const closeButtons = document.querySelectorAll('.close');
+            closeButtons.forEach(function (button) {
+                button.addEventListener('click', function () {
+                    const modal = this.closest('.modal');
+                    if (modal) {
+                        modal.style.display = 'none';
+                    }
+                });
+            });
+
+            // إغلاق النوافذ المنبثقة عند النقر خارجها
+            window.addEventListener('click', function (event) {
+                if (event.target.classList.contains('modal')) {
+                    event.target.style.display = 'none';
+                }
+            });
+
+            // تبديل تبويبات المحتوى
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(function (tab) {
+                tab.addEventListener('click', function () {
+                    // إزالة التنشيط من جميع التبويبات
+                    tabs.forEach(function (t) {
+                        t.classList.remove('active');
+                    });
+
+                    // إضافة التنشيط للتبويب المحدد
+                    this.classList.add('active');
+
+                    // إخفاء جميع محتويات التبويبات
+                    const tabContents = document.querySelectorAll('.tab-content');
+                    tabContents.forEach(function (content) {
+                        content.classList.remove('active');
+                    });
+
+                    // إظهار محتوى التبويب المحدد
+                    const tabId = this.getAttribute('data-tab');
+                    document.getElementById(tabId + '-tab').classList.add('active');
+                });
+            });
+
+            // معالجة إرسال نموذج إضافة دورة
+            const addCourseForm = document.getElementById('addCourseForm');
+            if (addCourseForm) {
+                addCourseForm.addEventListener('submit', function (e) {
+                    e.preventDefault();
+                    // هنا سيتم إرسال البيانات إلى الخادم
+                    addCourseModal.style.display = 'none';
+                });
+            }
+
+            // معالجة إرسال نموذج نقل الطالب
+            const transferForm = document.getElementById('transferForm');
+            if (transferForm) {
+                transferForm.addEventListener('submit', function (e) {
+                    e.preventDefault();
+                    // هنا سيتم إرسال البيانات إلى الخادم
+                    transferModal.style.display = 'none';
+                });
+            }
+
+            // معالجة حذف دورة من جدول الدورات
+            const deleteCourseButtons = document.querySelectorAll('#coursesTable .btn-danger');
+            deleteCourseButtons.forEach(function (button) {
+                button.addEventListener('click', function () {
+                    // تأكيد الحذف قبل التنفيذ
+                    if (confirm('هل أنت متأكد من حذف هذه الدورة؟')) {
+                        // هنا سيتم إرسال طلب الحذف إلى الخادم
+                        const row = this.closest('tr');
+                        if (row) {
+                            row.remove();
+                        }
+                    }
+                });
+            });
+
+            // معالجة تصفية سجل الحضور
+            const attendanceFilterBtn = document.querySelector('#attendance-tab .btn-info');
+            if (attendanceFilterBtn) {
+                attendanceFilterBtn.addEventListener('click', function () {
+                    // هنا سيتم تطبيق عوامل التصفية على جدول الحضور
+                });
+            }
+        });
+    </script>
+{% endblock %}
