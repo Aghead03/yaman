@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="receipt-container">
+    <div class="receipt-header">
+        <div class="logo">
+            <img src="{% static 'images/logo.png' %}" alt="الشعار">
+        </div>
+        <div class="info">
+            <h2>إيصال دفع</h2>
+            <p>رقم الإيصال: #{{ payment.id }}</p>
+            <p>التاريخ: {{ payment.date|date:"Y-m-d" }}</p>
+        </div>
+    </div>
+    
+    <div class="receipt-body">
+        <div class="receipt-row">
+            <div class="label">اسم الطالب:</div>
+            <div class="value">{{ payment.student.full_name }}</div>
+        </div>
+        <div class="receipt-row">
+            <div class="label">المبلغ:</div>
+            <div class="value">{{ payment.amount }} ل.س</div>
+        </div>
+        <div class="receipt-row">
+            <div class="label">طريقة الدفع:</div>
+            <div class="value">{{ payment.get_payment_method_display }}</div>
+        </div>
+        <div class="receipt-row">
+            <div class="label">حالة الدفع:</div>
+            <div class="value">
+                {% if payment.is_full %}مسدد بالكامل{% else %}دفعة جزئية{% endif %}
+            </div>
+        </div>
+        {% if payment.notes %}
+        <div class="receipt-row">
+            <div class="label">ملاحظات:</div>
+            <div class="value">{{ payment.notes }}</div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="receipt-footer">
+        <div class="signature">
+            <p>توقيع المحاسب</p>
+            <div class="signature-line"></div>
+        </div>
+        <div class="stamp">
+            <p>ختم المؤسسة</p>
+            <div class="stamp-placeholder"></div>
+        </div>
+    </div>
+</div>
+
+<div class="print-actions">
+    <button onclick="window.print()" class="btn btn-primary">
+        <i class="fas fa-print"></i> طباعة
+    </button>
+    <a href="{% url 'accounting:accounting' %}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> رجوع
+    </a>
+</div>
+
+<style>
+@media print {
+    .print-actions {
+        display: none;
+    }
+    body {
+        background-color: white;
+    }
+    .receipt-container {
+        border: none;
+        box-shadow: none;
+    }
+}
+</style>
+{% endblock %}

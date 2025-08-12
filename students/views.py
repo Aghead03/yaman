@@ -1,9 +1,9 @@
 from django import forms 
-from django.views.generic import ListView, CreateView
+from django.views.generic import ListView, CreateView ,DeleteView
 from django.views.generic.edit import FormView
 from django.urls import reverse_lazy
 
-
+from django.http import JsonResponse
 from django.shortcuts import render
 from django.views.generic import View , TemplateView ,ListView ,DetailView
 from .models import Student
@@ -27,8 +27,7 @@ class student_profile(DetailView):
     context_object_name = 'student'
 
     
-class attendance(TemplateView):
-    template_name = 'students/attendance.html'
+
     
 class grades(TemplateView):
     template_name = 'students/grades.html'
@@ -53,3 +52,11 @@ class CreateStudentView(CreateView):
     
     
     
+class StudentDeleteView(DeleteView):
+    model = Student
+    success_url = reverse_lazy('students:student')
+    
+    def delete(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        self.object.delete()
+        return JsonResponse({'success': True})

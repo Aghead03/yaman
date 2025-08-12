@@ -6,5 +6,5 @@ app_name = "pages"
 
 
 urlpatterns = [
-    path('',views.index.as_view() , name="index"),
+    path('',views.IndexView.as_view() , name="index"),
 ]

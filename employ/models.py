@@ -85,3 +85,26 @@ class Teacher(models.Model):
         verbose_name_plural = 'المدرسون'
         ordering = ['-created_at']
 # Create your models here.
+from django.contrib.auth.models import User
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
+class Employee(models.Model):
+    POSITION_CHOICES = [
+        ('admin', 'إداري'),
+        ('accountant', 'محاسب'),
+        ('mentor', 'موجه'),
+        ('manager', 'مدير'),
+        ('marketing', 'تسويق'),
+        ('reception', 'استقبال'),
+    ]
+    
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='employee')
+    position = models.CharField(max_length=20, choices=POSITION_CHOICES)
+    phone_number = models.CharField(max_length=20)
+    hire_date = models.DateField(auto_now_add=True)
+    salary = models.DecimalField(max_digits=10, decimal_places=2)
+    # باقي الحقول حسب احتياجك
+    
+    def __str__(self):
+        return f"{self.user.get_full_name()} - {self.get_position_display()}"

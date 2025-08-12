@@ -2,9 +2,11 @@ from django.shortcuts import render
 from django.views.generic import View , TemplateView ,ListView
 from django.views.generic import CreateView
 from django.urls import reverse_lazy
-from .models import Teacher
-from .forms import TeacherForm
+from .models import Teacher , Employee
+from .forms import TeacherForm ,EmployeeRegistrationForm
 from django.contrib import messages
+from django.contrib.auth.models import Group
+
 
 class CreateTeacherView(CreateView):
     model = Teacher
@@ -27,5 +29,36 @@ class teachers(ListView):
     model = Teacher
     context_object_name = 'teacher'
     
-class hr(TemplateView):
+class hr(ListView):
+    model = Employee
     template_name = 'employ/hr.html'
+    context_object_name = 'employees'
+    
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        position = self.request.GET.get('position')
+        search = self.request.GET.get('search')
+        
+        if position:
+            queryset = queryset.filter(position=position)
+        if search:
+            queryset = queryset.filter(user__username__icontains=search) | \
+            queryset.filter(user__first_name__icontains=search) | \
+            queryset.filter(user__last_name__icontains=search)
+        return queryset.select_related('user')
+
+
+
+def create_groups():
+    groups = ['Admins', 'Accountants','Mentor', 'Managers','Marketing','Reception', 'Employees']
+    for group_name in groups:
+        Group.objects.get_or_create(name=group_name)
+
+class EmployeeCreateView(CreateView):
+    form_class = EmployeeRegistrationForm
+    template_name = 'employ/employee_form.html'
+    success_url = '/employ/hr/'
+    
+    def get(self, request, *args, **kwargs):
+        create_groups() 
+        return super().get(request, *args, **kwargs)

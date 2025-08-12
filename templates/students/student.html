@@ -160,112 +160,85 @@
 
     <div class="tabs">
         <div class="tab active" data-tab="students">الطلاب المسجلين</div>
-        <div class="tab" data-tab="withdrawn">الطلاب المسحوبين</div>
-        <div class="tab" data-tab="transferred">الطلاب المنقولين</div>
+
     </div>
     <div class="tab-content active" id="teachers-tab">
         <div class="table-container">
             <table id="teachersTable">
-                
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>id</th>
-                        <th>الاسم </th>
-                        <th>رقم الهاتف</th>
-                        <th>الصف</th>
-                    </tr>
-                    {% for student in student %}
-                    <tr>
-                        <th>#</th>
-                        <th>{{student.id}}</th>
-                        <td><a href="{% url 'students:student_profile' student.id %}">{{student.full_name}}</a> </td>
-                        <td> {{student.student_number}}</td>
-                        <td>{{student.branch}}</td>
-                    </tr>
-                    {% endfor %}
-                </thead>
-                <tbody>
-                    <!-- سيتم ملؤها بواسطة JavaScript -->
-                </tbody>
-            </table>
-        </div>
-</div>
-    <!-- نموذج نقل طالب -->
-    <div id="transferModal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <h3>نقل طالب إلى صف آخر</h3>
-            <form id="transferForm">
-                <div class="form-row">
-                    <div class="form-col">
-                        <label for="currentClass">الصف الحالي</label>
-                        <input type="text" id="currentClass" readonly>
-                    </div>
-                    <div class="form-col">
-                        <label for="newClass">الصف الجديد</label>
-                        <select id="newClass" required>
-                            <option value="">اختر الصف الجديد</option>
-                            <option value="1">الصف الأول</option>
-                            <option value="2">الصف الثاني</option>
-                            <!-- باقي الصفوف -->
-                        </select>
-                    </div>
-                </div>
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>id</th>
+            <th>الاسم</th>
+            <th>رقم الهاتف</th>
+            <th>الصف</th>
+            <th>الإجراءات</th> <!-- عمود جديد للإجراءات -->
+        </tr>
+    </thead>
+    <tbody>
+        {% for student in student %}
+        <tr>
+            <td>{{ forloop.counter }}</td>
+            <td>{{ student.id }}</td>
+            <td><a href="{% url 'students:student_profile' student.id %}">{{ student.full_name }}</a></td>
+            <td>{{ student.student_number }}</td>
+            <td>{{ student.branch }}</td>
+            <td>
+                <a href="{% url 'students:student_profile' student.id %}" class="btn btn-sm btn-info">
+                    <i class="fas fa-eye"></i>
+                </a>
+                <button class="btn btn-sm btn-danger delete-btn" data-id="{{ student.id }}">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
 
-                <div class="form-row">
-                    <div class="form-col">
-                        <label for="transferDate">تاريخ النقل</label>
-                        <input type="date" id="transferDate" required>
-                    </div>
-                    <div class="form-col">
-                        <label for="transferReason">سبب النقل</label>
-                        <select id="transferReason">
-                            <option value="">اختر السبب</option>
-                            <option value="level">تقدم في المستوى</option>
-                            <option value="request">طلب ولي الأمر</option>
-                            <option value="other">أخرى</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-col">
-                        <label for="transferNotes">ملاحظات</label>
-                        <textarea id="transferNotes" rows="2"></textarea>
-                    </div>
-                </div>
-
-                <button type="submit" class="btn btn-primary">تأكيد النقل</button>
-            </form>
-        </div>
+<!-- نافذة تأكيد الحذف -->
+<div id="deleteModal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h3>تأكيد الحذف</h3>
+        <p>هل أنت متأكد من رغبتك في حذف هذا الطالب؟</p>
+        <form id="deleteForm" method="post" action="">
+            {% csrf_token %}
+            <input type="hidden" name="student_id" id="deleteStudentId">
+            <button type="submit" class="btn btn-danger">حذف</button>
+            <button type="button" class="btn btn-secondary" id="cancelDelete">إلغاء</button>
+        </form>
+    </div>
 </div>
 
-    <script>
-        
-        document.getElementById('addStudentBtn').addEventListener('click', function() {
-        document.getElementById('studentModal').style.display = 'block';
-        document.getElementById('studentModalTitle').textContent = 'إضافة طالب جديد';
-        document.getElementById('studentForm').reset();
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // فتح نافذة تأكيد الحذف
+    document.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const studentId = this.getAttribute('data-id');
+            document.getElementById('deleteStudentId').value = studentId;
+            document.getElementById('deleteForm').action = `/students/delete/${studentId}/`;
+            document.getElementById('deleteModal').style.display = 'block';
+        });
     });
 
-    // إغلاق النافذة المنبثقة
-    document.querySelector('.close').addEventListener('click', function() {
-        document.getElementById('studentModal').style.display = 'none';
+    // إغلاق النافذة
+    document.querySelector('#deleteModal .close').addEventListener('click', function() {
+        document.getElementById('deleteModal').style.display = 'none';
     });
 
-    document.getElementById('cancelBtn').addEventListener('click', function() {
-        document.getElementById('studentModal').style.display = 'none';
+    document.getElementById('cancelDelete').addEventListener('click', function() {
+        document.getElementById('deleteModal').style.display = 'none';
     });
 
     // إغلاق النافذة عند النقر خارجها
     window.addEventListener('click', function(event) {
-        if (event.target === document.getElementById('studentModal')) {
-            document.getElementById('studentModal').style.display = 'none';
+        if (event.target === document.getElementById('deleteModal')) {
+            document.getElementById('deleteModal').style.display = 'none';
         }
     });
-
-        // معالجة إرسال النموذج
-    </script>
+});
+</script>
 {% endblock %}
 

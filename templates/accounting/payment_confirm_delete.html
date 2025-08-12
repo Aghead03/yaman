@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="header">
+    <h2>تأكيد حذف الدفعة</h2>
+</div>
+
+<div class="confirm-container">
+    <p>هل أنت متأكد من رغبتك في حذف الدفعة #{{ object.id }} للطالب {{ object.student.full_name }} بقيمة {{ object.amount }} ل.س؟</p>
+    
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-actions">
+            <button type="submit" class="btn btn-danger">حذف</button>
+            <a href="{% url 'accounting:accounting' %}" class="btn btn-secondary">إلغاء</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

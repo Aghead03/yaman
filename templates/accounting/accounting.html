@@ -1,214 +1,386 @@
 {% extends "base.html" %}
 {% load static %}
 {% block content %}
-    <div class="module-header">
-        <h2>إدارة المحاسبة</h2>
-        <div class="header-actions">
-            <button class="btn btn-primary" id="addIncomeBtn">
-                <i class="fas fa-plus"></i> إضافة دخل
+<div class="header">
+    <h2>النظام المالي</h2>
+    <div class="actions">
+        <div class="btn-group">
+            <button class="btn btn-primary dropdown-toggle" data-toggle="dropdown">
+                <i class="fas fa-plus"></i> إضافة جديد
             </button>
-            <button class="btn btn-danger" id="addExpenseBtn">
-                <i class="fas fa-minus"></i> إضافة مصروف
-            </button>
+            <div class="dropdown-menu">
+                <a class="dropdown-item" href="{% url 'accounting:add_payment' %}">دفعة طالب</a>
+                <a class="dropdown-item" href="{% url 'accounting:add_income' %}">وارد مالي</a>
+                <a class="dropdown-item" href="{% url 'accounting:add_expense' %}">منصرف مالي</a>
+            </div>
         </div>
+        <button id="exportFinance" class="btn btn-success">
+            <i class="fas fa-file-export"></i> تصدير
+        </button>
     </div>
-    <div class="tabs">
-        <div class="tab active" data-tab="transactions">الحركات المالية</div>
-        <div class="tab" data-tab="reports">التقارير</div>
-    </div>
+</div>
+
+<div class="tabs">
+    <div class="tab active" data-tab="payments">سجل الدفعات</div>
+    <div class="tab" data-tab="cash">حركة الصندوق</div>
+    <div class="tab" data-tab="reports">التقارير المالية</div>
+</div>
+
+<div class="tab-content active" id="payments">
     <div class="filters">
-        <div class="form-row">
-            <div class="form-col">
-                <select id="typeFilter" class="form-control">
-                    <option value="">جميع الأنواع</option>
-                    <option value="income">دخل</option>
-                    <option value="expense">مصروف</option>
-                </select>
+        <form method="get" id="paymentFilterForm">
+            <div class="form-row">
+                <div class="form-col">
+                    <label>من تاريخ:</label>
+                    <input type="date" name="from_date" class="form-control" value="{{ request.GET.from_date }}">
+                </div>
+                <div class="form-col">
+                    <label>إلى تاريخ:</label>
+                    <input type="date" name="to_date" class="form-control" value="{{ request.GET.to_date }}">
+                </div>
+                <div class="form-col">
+                    <label>حالة الدفع:</label>
+                    <select name="status" class="form-control">
+                        <option value="">الكل</option>
+                        <option value="paid" {% if request.GET.status == 'paid' %}selected{% endif %}>مسدد</option>
+                        <option value="partial" {% if request.GET.status == 'partial' %}selected{% endif %}>جزئي</option>
+                    </select>
+                </div>
+                <div class="form-col">
+                    <button type="submit" class="btn btn-secondary">
+                        <i class="fas fa-filter"></i> تصفية
+                    </button>
+                    <button type="button" id="resetPaymentFilters" class="btn btn-outline-secondary">
+                        <i class="fas fa-undo"></i> إعادة تعيين
+                    </button>
+                </div>
             </div>
-            <div class="form-col">
-                <select id="categoryFilter" class="form-control">
-                    <option value="">جميع الفئات</option>
-                    <option value="tuition">رسوم دراسية</option>
-                    <option value="salary">رواتب</option>
-                    <option value="rent">إيجار</option>
-                    <option value="supplies">قرطاسية</option>
-                    <option value="other">أخرى</option>
-                </select>
+        </form>
+    </div>
+    
+    <div class="table-container">
+        <table id="paymentsTable">
+            <thead>
+                <tr>
+                    <th>رقم الإيصال</th>
+                    <th>الطالب</th>
+                    <th>المبلغ</th>
+                    <th>تاريخ الدفع</th>
+                    <th>طريقة الدفع</th>
+                    <th>الحالة</th>
+                    <th>الإجراءات</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for payment in payments %}
+                <tr>
+                    <td>#{{ payment.id }}</td>
+                    <td>{{ payment.student.full_name }}</td>
+                    <td>{{ payment.amount }} ل.س</td>
+                    <td>{{ payment.date|date:"Y-m-d" }}</td>
+                    <td>{{ payment.get_payment_method_display }}</td>
+                    <td>
+                        <span class="badge {% if payment.is_full %}paid{% else %}pending{% endif %}">
+                            {% if payment.is_full %}مسدد{% else %}جزئي{% endif %}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="action-buttons">
+                            <a href="{% url 'accounting:receipt' payment.id %}" class="btn btn-sm btn-info" target="_blank" title="طباعة">
+                                <i class="fas fa-print"></i>
+                            </a>
+                            <a href="{% url 'accounting:edit_payment' payment.id %}" class="btn btn-sm btn-warning" title="تعديل">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <button class="btn btn-sm btn-danger delete-payment" 
+                                    data-id="{{ payment.id }}"
+                                    data-url="{% url 'accounting:delete_payment' payment.id %}"
+                                    title="حذف">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center">لا توجد دفعات مسجلة</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="tab-content" id="cash">
+    <div class="filters">
+        <form method="get" id="cashFilterForm">
+            <div class="form-row">
+                <div class="form-col">
+                    <label>من تاريخ:</label>
+                    <input type="date" name="from_date" class="form-control" value="{{ request.GET.from_date }}">
+                </div>
+                <div class="form-col">
+                    <label>إلى تاريخ:</label>
+                    <input type="date" name="to_date" class="form-control" value="{{ request.GET.to_date }}">
+                </div>
+                <div class="form-col">
+                    <label>النوع:</label>
+                    <select name="type" class="form-control">
+                        <option value="">الكل</option>
+                        <option value="income" {% if request.GET.type == 'income' %}selected{% endif %}>وارد</option>
+                        <option value="expense" {% if request.GET.type == 'expense' %}selected{% endif %}>منصرف</option>
+                    </select>
+                </div>
+                <div class="form-col">
+                    <button type="submit" class="btn btn-secondary">
+                        <i class="fas fa-filter"></i> تصفية
+                    </button>
+                    <button type="button" id="resetCashFilters" class="btn btn-outline-secondary">
+                        <i class="fas fa-undo"></i> إعادة تعيين
+                    </button>
+                </div>
             </div>
-            <div class="form-col">
-                <input type="date" id="dateFrom" class="form-control" placeholder="من تاريخ">
+        </form>
+    </div>
+
+    <div class="report-cards">
+        <div class="stat-card">
+            {% comment %} <div class="stat-icon" style="background-color: var(--secondary-color);">
+                <i class="fas fa-money-bill-wave"></i>
+            </div> {% endcomment %}
+            <div class="stat-info">
+                <h3>إجمالي الوارد</h3>
+                <p>{{ total_income }} ل.س</p>
             </div>
-            <div class="form-col">
-                <input type="date" id="dateTo" class="form-control" placeholder="إلى تاريخ">
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon" style="background-color: var(--danger-color);">
+                <i class="fas fa-receipt"></i>
+            </div>
+            <div class="stat-info">
+                <h3>إجمالي المنصرف</h3>
+                <p>{{ total_expenses }} ل.س</p>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon" style="background-color: var(--info-color);">
+                <i class="fas fa-wallet"></i>
+            </div>
+            <div class="stat-info">
+                <h3>رصيد الصندوق</h3>
+                <p>{{ cash_balance }} ل.س</p>
             </div>
         </div>
     </div>
-    <div class="tab-content active" id="transactions-tab">
-        <div class="table-container">
-            <table id="transactionsTable">
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>التاريخ</th>
-                        <th>النوع</th>
-                        <th>الفئة</th>
-                        <th>المبلغ</th>
-                        <th>الوصف</th>
-                        <th>مسجل بواسطة</th>
-                        <th>الإجراءات</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- سيتم ملؤها بواسطة JavaScript -->
-                </tbody>
-            </table>
+    
+    <div class="table-container">
+        <table id="cashTable">
+            <thead>
+                <tr>
+                    <th>التاريخ</th>
+                    <th>النوع</th>
+                    <th>المبلغ</th>
+                    <th>الوصف</th>
+                    <th>المستخدم</th>
+                    <th>الإجراءات</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for transaction in transactions %}
+                <tr>
+                    <td>{{ transaction.date|date:"Y-m-d" }}</td>
+                    <td>
+                        <span class="transaction-type {% if transaction.type == 'income' %}type-income{% else %}type-expense{% endif %}">
+                            {{ transaction.get_type_display }}
+                        </span>
+                    </td>
+                    <td>{{ transaction.amount }} ل.س</td>
+                    <td>{{ transaction.description }}</td>
+                    <td>{{ transaction.user.username }}</td>
+                    <td>
+                        <div class="action-buttons">
+                            <a href="{% url 'accounting:edit_transaction' transaction.id %}" class="btn btn-sm btn-warning" title="تعديل">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <button class="btn btn-sm btn-danger delete-transaction" 
+                                    data-id="{{ transaction.id }}"
+                                    data-url="{% url 'accounting:delete_transaction' transaction.id %}"
+                                    title="حذف">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center">لا توجد حركات مالية</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="tab-content" id="reports">
+    <div class="chart-container">
+        <canvas id="financeChart"></canvas>
+    </div>
+    
+    <div class="report-summary">
+        <div class="card">
+            <div class="card-title">إجمالي الدفعات هذا الشهر</div>
+            <div class="card-value">{{ monthly_payments.total }} ل.س</div>
+            <div class="card-footer">
+                <span>عدد الدفعات: {{ monthly_payments.count }}</span>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-title">حركة الصندوق الشهرية</div>
+            <div class="card-value">{{ monthly_transactions.balance }} ل.س</div>
+            <div class="card-footer">
+                <span>وارد: {{ monthly_transactions.income }} ل.س</span>
+                <span>منصرف: {{ monthly_transactions.expense }} ل.س</span>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-title">أعلى طالب مدفوعات</div>
+            <div class="card-value">{{ top_student.name }}</div>
+            <div class="card-footer">
+                <span>المبلغ: {{ top_student.amount }} ل.س</span>
+            </div>
         </div>
     </div>
-    <div class="tab-content" id="reports-tab">
-        <div class="report-cards">
-            <div class="card">
-                <div class="card-title">إجمالي الدخل</div>
-                <div class="card-value" id="totalIncome">0</div>
-            </div>
-            <div class="card">
-                <div class="card-title">إجمالي المصروفات</div>
-                <div class="card-value" id="totalExpenses">0</div>
-            </div>
-            <div class="card">
-                <div class="card-title">صافي الربح</div>
-                <div class="card-value" id="netProfit">0</div>
-            </div>
+    
+    <div class="detailed-reports">
+        <div class="report-card">
+            <h3>إجمالي الوارد</h3>
+            <p>{{ total_income }} ل.س</p>
         </div>
-        <div class="chart-container">
-            <canvas id="accountingChart"></canvas>
+        <div class="report-card">
+            <h3>إجمالي المنصرف</h3>
+            <p>{{ total_expenses }} ل.س</p>
+        </div>
+        <div class="report-card">
+            <h3>رصيد الصندوق</h3>
+            <p>{{ cash_balance }} ل.س</p>
         </div>
     </div>
-    <!-- نموذج إضافة دخل -->
-    <div id="incomeModal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <h3>إضافة حركة دخل</h3>
-            <form id="incomeForm">
-                <div class="form-row">
-                    <div class="form-col">
-                        <label for="incomeDate">التاريخ</label>
-                        <input type="date" id="incomeDate" required>
-                    </div>
-                    <div class="form-col">
-                        <label for="incomeCategory">الفئة</label>
-                        <select id="incomeCategory" required>
-                            <option value="">اختر الفئة</option>
-                            <option value="tuition">رسوم دراسية</option>
-                            <option value="registration">رسوم تسجيل</option>
-                            <option value="book">بيع كتب</option>
-                            <option value="other">أخرى</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-col">
-                        <label for="incomeAmount">المبلغ</label>
-                        <input type="number" id="incomeAmount" required>
-                    </div>
-                    <div class="form-col">
-                        <label for="incomeStudent">الطالب (اختياري)</label>
-                        <select id="incomeStudent">
-                            <option value="">اختر الطالب</option>
-                            <!-- سيتم ملؤها بواسطة JavaScript -->
-                        </select>
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-col">
-                        <label for="incomeDescription">الوصف</label>
-                        <textarea id="incomeDescription" rows="3" required></textarea>
-                    </div>
-                </div>
-                <button type="submit" class="btn btn-primary">حفظ</button>
+</div>
+
+<!-- Modals -->
+<div class="modal" id="deleteModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h4>تأكيد الحذف</h4>
+            <button class="close">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p id="deleteMessage">هل أنت متأكد من رغبتك في الحذف؟</p>
+        </div>
+        <div class="modal-footer">
+            <form id="deleteForm" method="post">
+                {% csrf_token %}
+                <button type="button" class="btn btn-secondary close-btn">إلغاء</button>
+                <button type="submit" class="btn btn-danger">حذف</button>
             </form>
         </div>
     </div>
-    <!-- نموذج إضافة مصروف -->
-    <div id="expenseModal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <h3>إضافة حركة مصروف</h3>
-            <form id="expenseForm">
-                <div class="form-row">
-                    <div class="form-col">
-                        <label for="expenseDate">التاريخ</label>
-                        <input type="date" id="expenseDate" required>
-                    </div>
-                    <div class="form-col">
-                        <label for="expenseCategory">الفئة</label>
-                        <select id="expenseCategory" required>
-                            <option value="">اختر الفئة</option>
-                            <option value="salary">رواتب</option>
-                            <option value="rent">إيجار</option>
-                            <option value="supplies">قرطاسية</option>
-                            <option value="electricity">كهرباء</option>
-                            <option value="water">مياه</option>
-                            <option value="maintenance">صيانة</option>
-                            <option value="other">أخرى</option>
-                        </select>
+</div>
+
+<div class="modal" id="exportModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h4>تصدير البيانات</h4>
+            <button class="close">&times;</button>
+        </div>
+        <div class="modal-body">
+            {% comment %} <form id="exportForm" method="post" action="{% url 'accounting:export' %}"> {% endcomment %}
+                {% csrf_token %}
+                <div class="form-group">
+                    <label>نوع التصدير:</label>
+                    <select name="export_type" class="form-control">
+                        <option value="excel">Excel</option>
+                        <option value="pdf">PDF</option>
+                        <option value="csv">CSV</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>الفترة الزمنية:</label>
+                    <div class="form-row">
+                        <div class="form-col">
+                            <input type="date" name="from_date" class="form-control" placeholder="من تاريخ">
+                        </div>
+                        <div class="form-col">
+                            <input type="date" name="to_date" class="form-control" placeholder="إلى تاريخ">
+                        </div>
                     </div>
                 </div>
-                <div class="form-row">
-                    <div class="form-col">
-                        <label for="expenseAmount">المبلغ</label>
-                        <input type="number" id="expenseAmount" required>
-                    </div>
-                    <div class="form-col">
-                        <label for="expenseRecipient">المستلم</label>
-                        <input type="text" id="expenseRecipient">
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-col">
-                        <label for="expenseDescription">الوصف</label>
-                        <textarea id="expenseDescription" rows="3" required></textarea>
-                    </div>
-                </div>
-                <button type="submit" class="btn btn-danger">حفظ</button>
             </form>
         </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary close-btn">إلغاء</button>
+            <button type="submit" form="exportForm" class="btn btn-success">تصدير</button>
+        </div>
     </div>
-    <script>
+</div>
+{% block scripts %}
+<script>
 document.addEventListener('DOMContentLoaded', function() {
-    // عناصر الأزرار والنوافذ المنبثقة
-    const addIncomeBtn = document.getElementById('addIncomeBtn');
-    const addExpenseBtn = document.getElementById('addExpenseBtn');
-    const incomeModal = document.getElementById('incomeModal');
-    const expenseModal = document.getElementById('expenseModal');
-    const closeButtons = document.querySelectorAll('.close');
-
-    // فتح نافذة إضافة دخل
-    addIncomeBtn.addEventListener('click', function() {
-        incomeModal.style.display = 'block';
-    });
-
-    // فتح نافذة إضافة مصروف
-    addExpenseBtn.addEventListener('click', function() {
-        expenseModal.style.display = 'block';
-    });
-
-    // إغلاق النوافذ المنبثقة
-    closeButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            incomeModal.style.display = 'none';
-            expenseModal.style.display = 'none';
+    // تبديل التبويبات
+    const tabs = document.querySelectorAll('.tab');
+    const tabContents = document.querySelectorAll('.tab-content');
+    
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            // إزالة النشاط من جميع التبويبات والمحتويات
+            tabs.forEach(t => t.classList.remove('active'));
+            tabContents.forEach(content => content.classList.remove('active'));
+            
+            // إضافة النشاط للتبويب والمحتوى المحدد
+            tab.classList.add('active');
+            const tabId = tab.getAttribute('data-tab');
+            document.getElementById(tabId).classList.add('active');
         });
     });
 
-    // إغلاق النوافذ عند النقر خارجها
-    window.addEventListener('click', function(event) {
-        if (event.target === incomeModal) {
-            incomeModal.style.display = 'none';
-        }
-        if (event.target === expenseModal) {
-            expenseModal.style.display = 'none';
-        }
+    // حذف الدفعة/المعاملة (نفس الكود السابق)
+    const deleteButtons = document.querySelectorAll('.delete-payment, .delete-transaction');
+    deleteButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const deleteUrl = this.getAttribute('data-url');
+            document.getElementById('deleteForm').action = deleteUrl;
+            document.getElementById('deleteModal').style.display = 'block';
+        });
+    });
+
+    // إغلاق Modal
+    const closeButtons = document.querySelectorAll('.close, .close-btn');
+    closeButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            document.getElementById('deleteModal').style.display = 'none';
+            document.getElementById('exportModal').style.display = 'none';
+        });
+    });
+
+    // فتح Modal التصدير
+    document.getElementById('exportFinance').addEventListener('click', function() {
+        document.getElementById('exportModal').style.display = 'block';
+    });
+
+    // إعادة تعيين الفلاتر
+    document.getElementById('resetPaymentFilters').addEventListener('click', function() {
+        document.getElementById('paymentFilterForm').reset();
+        document.getElementById('paymentFilterForm').submit();
+    });
+
+    document.getElementById('resetCashFilters').addEventListener('click', function() {
+        document.getElementById('cashFilterForm').reset();
+        document.getElementById('cashFilterForm').submit();
     });
 });
-    </script>
+</script>
 {% endblock %}
+
+{% endblock %}
+
+

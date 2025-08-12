@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="header">
+    <h2>{% if object %}تعديل{% else %}إضافة{% endif %} دفعة طالب</h2>
+</div>
+
+<div class="form-container">
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-row">
+            <div class="form-col">
+                <label for="{{ form.student.id_for_label }}">الطالب:</label>
+                {{ form.student }}
+                {{ form.student.errors }}
+            </div>
+            <div class="form-col">
+                <label for="{{ form.amount.id_for_label }}">المبلغ:</label>
+                {{ form.amount }}
+                {{ form.amount.errors }}
+            </div>
+        </div>
+        
+        <div class="form-row">
+            <div class="form-col">
+                <label for="{{ form.date.id_for_label }}">تاريخ الدفع:</label>
+                {{ form.date }}
+                {{ form.date.errors }}
+            </div>
+            <div class="form-col">
+                <label for="{{ form.payment_method.id_for_label }}">طريقة الدفع:</label>
+                {{ form.payment_method }}
+                {{ form.payment_method.errors }}
+            </div>
+        </div>
+        
+        <div class="form-row">
+            <div class="form-col">
+                <label for="{{ form.is_full.id_for_label }}">حالة الدفع:</label>
+                <div class="checkbox-container">
+                    {{ form.is_full }}
+                    <label for="{{ form.is_full.id_for_label }}">دفعة كاملة</label>
+                </div>
+            </div>
+        </div>
+        
+        <div class="form-row">
+            <div class="form-col">
+                <label for="{{ form.notes.id_for_label }}">ملاحظات:</label>
+                {{ form.notes }}
+                {{ form.notes.errors }}
+            </div>
+        </div>
+        
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">حفظ</button>
+            <a href="{% url 'accounting:accounting' %}" class="btn btn-secondary">إلغاء</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

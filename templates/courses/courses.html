@@ -4,14 +4,16 @@
     <div class="module-header">
         <h2>إدارة الدورات والبرامج</h2>
         <div class="header-actions">
-            <button class="btn btn-primary" id="addCourseBtn">
-                <i class="fas fa-plus"></i> إضافة دورة جديدة
-            </button>
+            <a class="btn btn-primary" id="addCourseBtn" href="{% url "courses:subject_create" %}">
+                <i class="fas fa-plus"></i> إضافة مادة جديدة
+            </a>
             <button class="btn btn-secondary" id="addProgramBtn">
                 <i class="fas fa-layer-group"></i> إضافة برنامج جديد
             </button>
         </div>
     </div>
+    {% include "partials/_alerts.html" %}
+
     <div class="tabs">
         <div class="tab active" data-tab="courses">الدورات</div>
         <div class="tab" data-tab="programs">البرامج</div>
@@ -160,7 +162,7 @@
         </div>
     </div>
     <!-- نموذج إضافة/تعديل دورة -->
-    <div id="courseModal" class="modal">
+    {% comment %} <div id="courseModal" class="modal">
         <div class="modal-content">
             <span class="close">&times;</span>
             <h3 id="courseModalTitle">إضافة دورة جديدة</h3>
@@ -237,7 +239,7 @@
                 </div>
             </form>
         </div>
-    </div>
+    </div> {% endcomment %}
     <!-- نموذج إضافة/تعديل برنامج -->
     <div id="programModal" class="modal">
         <div class="modal-content">

@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h4>إضافة مادة لشعبة {{ classroom.name }}</h4>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button type="submit" class="btn btn-success">
+                    <i class="fas fa-save"></i> حفظ
+                </button>
+                <a href="{% url 'classroom:classroom_subject_list' classroom.id %}" class="btn btn-secondary">
+                    <i class="fas fa-times"></i> إلغاء
+                </a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

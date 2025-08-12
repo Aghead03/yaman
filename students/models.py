@@ -17,10 +17,9 @@ class Student(models.Model):
         OTHER = 'other',
     
     class Academic_Track(models.TextChoices):
-        Literary = 'Literary'
-        Scientific = 'Scientific'
-        Ninth = 'Ninth'
-    
+        LITERARY = 'أدبي', 'الأدبي'
+        SCIENTIFIC = 'علمي', 'العلمي'
+        NINTH_GRADE = 'تاسع', 'الصف التاسع'
     # Basic Information
     full_name = models.CharField( max_length=100)
     

@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="header">
+    <h2>{% if object %}تعديل{% else %}إضافة{% endif %} {{ title }}</h2>
+</div>
+
+<div class="form-container">
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-row">
+            <div class="form-col">
+                <label for="{{ form.amount.id_for_label }}">المبلغ:</label>
+                {{ form.amount }}
+                {{ form.amount.errors }}
+            </div>
+            <div class="form-col">
+                <label for="{{ form.date.id_for_label }}">التاريخ:</label>
+                {{ form.date }}
+                {{ form.date.errors }}
+            </div>
+        </div>
+        
+        <div class="form-row">
+            <div class="form-col">
+                <label for="{{ form.description.id_for_label }}">الوصف:</label>
+                {{ form.description }}
+                {{ form.description.errors }}
+            </div>
+        </div>
+        
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">حفظ</button>
+            <a href="{% url 'accounting:accounting' %}" class="btn btn-secondary">إلغاء</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

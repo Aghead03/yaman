@@ -1,0 +1,179 @@
+from django.shortcuts import render, get_object_or_404, redirect
+from django.views.generic import View, TemplateView, ListView, CreateView, DeleteView
+from django.urls import reverse_lazy, reverse
+from django.contrib import messages
+from .models import Classroom ,Classroomenrollment ,ClassroomSubject
+from .form import ClassroomForm ,ClassroomSubjectForm
+from students.models import Student
+
+
+
+
+# Create your views here.
+class ClassroomListView(ListView):
+    template_name = 'classroom/classroom.html'
+    model = Classroom
+    context_object_name = 'classrooms'
+    
+    
+class CreateClassroomView(CreateView):
+    model = Classroom
+    form_class = ClassroomForm
+    template_name = 'classroom/create_classroom.html'
+    success_url = reverse_lazy('classroom:classroom')
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(self.request, 'تم إضافة الشعبة بنجاح')
+        return response
+
+    def form_invalid(self, form):
+        messages.error(self.request, 'حدث خطأ في إدخال البيانات')
+        return super().form_invalid(form)    
+    
+
+class AssignStudentsView(View):
+    template_name = 'classroom/assign_students.html'
+
+    def get(self, request, classroom_id):
+        classroom = get_object_or_404(Classroom, id=classroom_id)
+        enrollments = Classroomenrollment.objects.filter(classroom=classroom)
+        
+        # تصفية الطلاب غير المعينين حسب فرع الشعبة
+        unassigned_students = Student.objects.filter(
+        branch__iexact=classroom.branches
+        ).exclude(
+            id__in=enrollments.values_list('student__id', flat=True)
+        )
+        
+        return render(request, self.template_name, {
+            'classroom': classroom,
+            'unassigned_students': unassigned_students,
+            'assigned_students': [e.student for e in enrollments]
+        })
+
+    def post(self, request, classroom_id):
+        classroom = get_object_or_404(Classroom, id=classroom_id)
+        student_ids = request.POST.getlist('student_ids')
+
+        if student_ids:
+            for student_id in student_ids:
+                # التحقق من أن الطالب من نفس الفرع قبل الإضافة
+                student = get_object_or_404(Student, id=student_id)
+                if student.branch == classroom.branches:
+                    Classroomenrollment.objects.get_or_create(
+                        student_id=student_id,
+                        classroom=classroom,
+                    )
+                else:
+                    messages.warning(request, f'الطالب {student.full_name} ليس من فرع {classroom.get_branches_display()}')
+            
+            messages.success(request, 'تم تعيين الطلاب للشعبة بنجاح')
+        
+        return redirect('classroom:assign_students', classroom_id=classroom_id)
+
+class UnassignStudentView(View):
+    def post(self, request, classroom_id, student_id):
+        enrollment = get_object_or_404(
+            Classroomenrollment,
+            classroom_id=classroom_id,
+            student_id=student_id
+        )
+        enrollment.delete()
+        messages.success(request, 'تم إزالة الطالب من الشعبة بنجاح')
+        return redirect('classroom:assign_students', classroom_id=classroom_id)
+
+class ClassroomStudentsView(ListView):
+    template_name = 'classroom/classroom_students.html'
+    context_object_name = 'students'
+
+    def get_queryset(self):
+        classroom = get_object_or_404(Classroom, id=self.kwargs['classroom_id'])
+        return Student.objects.filter(
+            classroom_enrollments__classroom=classroom,
+            branch=classroom.branches  
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        classroom = get_object_or_404(Classroom, id=self.kwargs['classroom_id'])
+        context['classroom'] = classroom
+        return context
+
+class DeleteClassroomView(DeleteView):
+    model = Classroom
+    pk_url_kwarg = 'classroom_id'
+    success_url = reverse_lazy('classroom:classroom')
+    template_name = 'classroom/classroom_confirm_delete.html'
+
+    def delete(self, request, *args, **kwargs):
+        messages.success(self.request, 'تم حذف الشعبة بنجاح')
+        return super().delete(request, *args, **kwargs)
+
+
+class ClassroomSubjectListView(ListView):
+    model = ClassroomSubject
+    template_name = 'classroom/classroom_subject_list.html'
+
+    def get_queryset(self):
+        return ClassroomSubject.objects.filter(classroom_id=self.kwargs['classroom_id'])
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['classroom'] = get_object_or_404(Classroom, id=self.kwargs['classroom_id'])
+        return context
+
+class ClassroomSubjectCreateView(CreateView):
+    model = ClassroomSubject
+    form_class = ClassroomSubjectForm
+    template_name = 'classroom/classroom_subject_form.html'
+
+    def get_initial(self):
+        initial = super().get_initial()
+        initial['classroom'] = get_object_or_404(Classroom, id=self.kwargs['classroom_id'])
+        return initial
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['classroom'] = get_object_or_404(Classroom, id=self.kwargs['classroom_id'])
+        return context
+
+    def form_valid(self, form):
+        form.instance.classroom = get_object_or_404(Classroom, id=self.kwargs['classroom_id'])
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse('classroom:classroom_subject_list', kwargs={'classroom_id': self.kwargs['classroom_id']})
+
+
+
+class AssignToCourseView(View):
+    template_name = 'classroom/assign_to_course.html'
+
+    def get(self, request, course_id):
+        course = get_object_or_404(Classroom, id=course_id, class_type='course')
+        enrollments = Classroomenrollment.objects.filter(classroom=course)
+        
+        enrolled_student_ids = enrollments.values_list('student__id', flat=True)
+        available_students = Student.objects.exclude(id__in=enrolled_student_ids)
+        
+        return render(request, self.template_name, {
+            'course': course,
+            'available_students': available_students,
+            'enrolled_students': [e.student for e in enrollments]
+        })
+
+    def post(self, request, course_id):
+        course = get_object_or_404(Classroom, id=course_id, class_type='course')
+        student_ids = request.POST.getlist('student_ids')
+
+        if student_ids:
+            for student_id in student_ids:
+                Classroomenrollment.objects.get_or_create(
+                    student_id=student_id,
+                    classroom=course,
+                    
+                )
+            messages.success(request, 'تم تسجيل الطلاب في الدورة بنجاح')
+        
+        return redirect('classroom:assign_to_course', course_id=course_id)

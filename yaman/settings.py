@@ -42,6 +42,14 @@ INSTALLED_APPS = [
     'pages',
     'students',
     'employ',
+    'accounting',
+    'attendance',
+    'grade',
+    'courses',
+    'classroom',
+    'registration',
+    
+    
     
     
 ]

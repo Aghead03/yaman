@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">
+                <i class="fas fa-chalkboard-teacher me-2"></i>
+                قائمة الشعب الدراسية
+            </h4>
+            <span>
+                <i class="fas fa-info-circle me-1"></i>
+                اختر شعبة لإدارة العلامات
+            </span>
+        </div>
+        
+        <div class="card-body p-0">
+            {% include "partials/_alerts.html" %}
+            
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th width="60%">اسم الشعبة</th>
+                            <th class="text-center">عدد الطلاب</th>
+                            <th class="text-center">الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for classroom in classrooms %}
+                        <tr>
+                            <td>
+                                <a href="{% url 'grade:grade_list' classroom.id %}" class="text-decoration-none">
+                                    <i class="fas fa-door-open text-primary me-2"></i>
+                                    <strong>{{ classroom.name }}</strong>
+                                </a>
+                            </td>
+                            <td class="text-center">
+                                <span class="badge bg-primary rounded-pill px-3 py-2">
+                                    {{ classroom.student_set.count }} طالب
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <a href="{% url 'grade:grade_list' classroom.id %}" 
+                                class="btn btn-sm btn-outline-primary"
+                                title="عرض العلامات">
+                                    <i class="fas fa-list-check"></i>
+                                </a>
+                                <a href="{% url 'grade:grade_create' classroom.id %}" 
+                                class="btn btn-sm btn-outline-success ms-2"
+                                title="إضافة علامات">
+                                    <i class="fas fa-plus"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3" class="text-center py-4 text-muted">
+                                <i class="fas fa-info-circle fa-2x mb-3"></i><br>
+                                لا توجد شعب متاحة حالياً
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div class="card-footer bg-light">
+            <div class="d-flex justify-content-between">
+                <small class="text-muted">
+                    إجمالي الشعب: {{ classrooms.count }}
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .table-hover tbody tr:hover {
+        background-color: rgba(13, 110, 253, 0.05);
+    }
+    a.text-decoration-none:hover {
+        color: #0d6efd !important;
+    }
+</style>
+{% endblock %}

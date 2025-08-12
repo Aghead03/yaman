@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+<div class="module-header">
+    <h2>تعديل الحضور</h2>
+</div>
+{% include "partials/_alerts.html" %}
+
+<form method="post">
+    {% csrf_token %}
+    <div class="form-group">
+        <label>الشعبة: {{ classroom.name }}</label>
+    </div>
+    <div class="form-group">
+        <label>التاريخ: {{ date }}</label>
+    </div>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>اسم الطالب</th>
+                <th>حالة الحضور</th>
+                <th>ملاحظات</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for attendance in attendances %}
+            <tr>
+                <td>{{ attendance.student.full_name }}</td>
+                <td>
+                    <select name="status_{{ attendance.student.id }}" class="form-control">
+                        <option value="present" {% if attendance.status == 'present' %}selected{% endif %}>حاضر</option>
+                        <option value="absent" {% if attendance.status == 'absent' %}selected{% endif %}>غائب</option>
+                        <option value="late" {% if attendance.status == 'late' %}selected{% endif %}>متأخر</option>
+                    </select>
+                </td>
+                <td>
+                    <input type="text" name="notes_{{ attendance.student.id }}" 
+                        value="{{ attendance.notes|default:'' }}" class="form-control">
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <button type="submit" class="btn btn-primary">حفظ التعديلات</button>
+    <a href="{% url 'attendance:attendance' %}" class="btn btn-secondary">إلغاء</a>
+</form>
+{% endblock %}
