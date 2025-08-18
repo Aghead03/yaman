@@ -4,27 +4,40 @@
     <div class="sidebar-header">
         <img src="{% static "img/logo.png" %}" alt="معهد اليمان" class="sidebar-logo">
         <div class="user-info">
-            <span id="userName"></span>
-            <small id="userRole"></small>
+            <span>{{ user.get_full_name }}</span>
+            <small>{{ user.employee.get_position_display }}</small>
         </div>
     </div>
     <div class="sidebar-menu">
+        {% if user.employee.position == 'manager' or user.is_superuser  %}
         <a href="{% url "pages:index" %}" class="menu-item" data-module="dashboard">
             <i class="fas fa-tachometer-alt"></i>
             <span>لوحة التحكم</span>
         </a>
+        {% endif %}
+
+        {% if user.employee.position in 'manager,admin,reception' or user.is_superuser  %}
         <a href="{% url "students:student" %}" class="menu-item" data-module="students">
             <i class="fas fa-users"></i>
             <span>الطلاب</span>
         </a>
+        {% endif %}
+
+        {% if user.employee.position in 'manager,admin,' or user.is_superuser  %}
         <a href="{% url "employ:teachers" %}" class="menu-item" data-module="teachers">
             <i class="fas fa-chalkboard-teacher"></i>
             <span>المدرسون</span>
         </a>
+        {% endif %}
+
+        {% if user.employee.position in 'manager,accountant,reception' or user.is_superuser  %}
         <a href="{% url "accounting:accounting" %}" class="menu-item" data-module="accounting">
             <i class="fas fa-calculator"></i>
             <span>المحاسبة</span>
         </a>
+        {% endif %}
+
+        {% if user.employee.position in 'manager,mentor' or user.is_superuser  %}
         <a href="{% url "attendance:attendance" %}" class="menu-item" data-module="attendance">
             <i class="fas fa-clipboard-check"></i>
             <span>الحضور</span>
@@ -33,26 +46,31 @@
             <i class="fas fa-clipboard-check"></i>
             <span>الشعب</span>
         </a>
-        <a href="{% url "grade:grades" %}" class="menu-item" data-module="grades">
+        <a href="{% url "grade:dashboard" %}" class="menu-item" data-module="grades">
             <i class="fas fa-award"></i>
             <span>العلامات</span>
         </a>
+        {% endif %}
+        {% if user.employee.position == 'manager' or user.is_superuser  %}
         <a href="{% url "employ:hr" %}" class="menu-item" data-module="hr">
             <i class="fas fa-user-tie"></i>
             <span>الموظفين</span>
         </a>
+        {% endif %}
+        {% if user.employee.position in 'manager,admin' or user.is_superuser  %}
+        <a href="{% url "courses:subject_list" %}" class="menu-item" data-module="hr">
+            <i class="fas fa-user-tie"></i>
+            <span>المواد</span>
+        </a>
+        {% endif %}
         {% comment %} <a href="{% url "students:student_profile" %}" class="menu-item" data-module="hr">
             <i class="fas fa-user-tie"></i>
             <span>ملفات الطلاب</span>
         </a> {% endcomment %}
-        <a href="{% url "courses:subject_list" %}" class="menu-item" data-module="hr">
-            <i class="fas fa-user-tie"></i>
-            <span> المواد</span>
-        </a>
-        <a href="{% url "courses:courses" %}" class="menu-item" data-module="hr">
+        {% comment %} <a href="{% url "courses:courses" %}" class="menu-item" data-module="hr">
             <i class="fas fa-user-tie"></i>
             <span>الدورات والبرامج</span>
-        </a>
+        </a> {% endcomment %}
         {% comment %} <a href="{% url "students:student_groups" %}" class="menu-item" data-module="hr">
             <i class="fas fa-user-tie"></i>
             <span>المجموعة الطلابية</span>
@@ -61,10 +79,16 @@
             <i class="fas fa-chart-bar"></i>
             <span>التقارير</span>
         </a> {% endcomment %}
-        <a href="/registration/signup/" class="menu-item" id="signupBtn">
+        {% comment %} <a href="/registration/signup/" class="menu-item" id="signupBtn">
             <i class="fas fa-user-plus"></i>
             <span>إضافة حساب جديد</span>
-        </a>
+        </a> {% endcomment %}
+        {% if user.is_superuser %}
+            <a href="{% url 'employ:select_employee' %}" class="menu-item">
+                <i class="fas fa-user-edit"></i>
+                <span>تعديل موظف</span>
+            </a>
+        {% endif %}
         
         <form action="{% url 'logout' %}" method="post" style="display: inline;">
             {% csrf_token %}

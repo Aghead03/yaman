@@ -14,8 +14,15 @@
 <div class="filters">
     <div class="form-row">
         <div class="form-col">
-            <select id="branchTypeFilter" class="form-control">
+            <select id="classTypeFilter" class="form-control">
                 <option value="">جميع الأنواع</option>
+                <option value="study">شعبة دراسية</option>
+                <option value="course">دورة</option>
+            </select>
+        </div>
+        <div class="form-col">
+            <select id="branchTypeFilter" class="form-control">
+                <option value="">جميع الفروع</option>
                 <option value="علمي">علمي</option>
                 <option value="أدبي">أدبي</option>
                 <option value="تاسع">تاسع</option>
@@ -41,7 +48,8 @@
             <tr>
                 <th>#</th>
                 <th>اسم الشعبة</th>
-                <th>النوع</th>
+                <th>نوع الشعبة</th>
+                <th>الفرع</th>
                 <th>عدد الطلاب</th>
                 <th>الإجراءات</th>
             </tr>
@@ -52,9 +60,23 @@
                 <td>{{ classroom.id }}</td>
                 <td>{{ classroom.name }}</td>
                 <td>
-                    <span class="badge {% if classroom.branches == 'scientific' %}scientific-badge{% elif classroom.grade_level == 'literary' %}literary-badge{% else %}ninth-badge{% endif %}">
-                        {{ classroom.branches }}
+                    <span class="badge {% if classroom.class_type == 'study' %}study-badge{% else %}course-badge{% endif %}" 
+                          data-type="{{ classroom.class_type }}">
+                        {{ classroom.get_class_type_display }}
                     </span>
+                </td>
+                <td>
+                    {% if classroom.class_type == 'study' %}
+                    <span class="badge 
+                        {% if classroom.branches == 'علمي' %}scientific-badge
+                        {% elif classroom.branches == 'أدبي' %}literary-badge
+                        {% else %}ninth-badge{% endif %}"
+                        data-branch="{{ classroom.branches }}">
+                        {{ classroom.get_branches_display }}
+                    </span>
+                    {% else %}
+                    -
+                    {% endif %}
                 </td>
                 <td>{{ classroom.enrollments.count }}</td>
                 <td>
@@ -79,15 +101,44 @@
             </tr>
             {% empty %}
             <tr>
-                <td colspan="5" class="text-center">لا توجد شعب متاحة</td>
+                <td colspan="6" class="text-center">لا توجد شعب متاحة</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
 
+<style>
+    .study-badge {
+        background-color: #3498db;
+        color: white;
+    }
+    .course-badge {
+        background-color: #2ecc71;
+        color: white;
+    }
+    .scientific-badge {
+        background-color: #e74c3c;
+        color: white;
+    }
+    .literary-badge {
+        background-color: #9b59b6;
+        color: white;
+    }
+    .ninth-badge {
+        background-color: #f39c12;
+        color: white;
+    }
+    .badge {
+        padding: 5px 10px;
+        border-radius: 4px;
+        font-size: 14px;
+    }
+</style>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    const classTypeFilter = document.getElementById('classTypeFilter');
     const branchTypeFilter = document.getElementById('branchTypeFilter');
     const branchSearch = document.getElementById('branchSearch');
     const filterBtn = document.getElementById('filterBranchesBtn');
@@ -95,22 +146,27 @@ document.addEventListener('DOMContentLoaded', function() {
     const tableRows = document.querySelectorAll('#branchesTable tbody tr');
 
     function filterBranches() {
-        const selectedType = branchTypeFilter.value;
+        const selectedClassType = classTypeFilter.value;
+        const selectedBranchType = branchTypeFilter.value;
         const searchText = branchSearch.value.toLowerCase();
 
         tableRows.forEach(row => {
-            const branchName = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
-            const branchType = row.querySelector('td:nth-child(3) span').textContent;
+            const className = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
+            const classTypeValue = row.querySelector('td:nth-child(3) span').dataset.type;
+            const branchTypeElement = row.querySelector('td:nth-child(4) span');
+            const branchTypeValue = branchTypeElement ? branchTypeElement.dataset.branch : '';
             
-            const typeMatch = selectedType === '' || branchType === selectedType;
-            const searchMatch = branchName.includes(searchText);
+            const classTypeMatch = selectedClassType === '' || classTypeValue === selectedClassType;
+            const branchTypeMatch = selectedBranchType === '' || branchTypeValue === selectedBranchType;
+            const searchMatch = className.includes(searchText);
             
-            row.style.display = typeMatch && searchMatch ? '' : 'none';
+            row.style.display = classTypeMatch && branchTypeMatch && searchMatch ? '' : 'none';
         });
     }
 
     filterBtn.addEventListener('click', filterBranches);
     resetBtn.addEventListener('click', function() {
+        classTypeFilter.value = '';
         branchTypeFilter.value = '';
         branchSearch.value = '';
         tableRows.forEach(row => row.style.display = '');
@@ -119,6 +175,10 @@ document.addEventListener('DOMContentLoaded', function() {
     branchSearch.addEventListener('keyup', function(e) {
         if (e.key === 'Enter') filterBranches();
     });
+
+    // تطبيق التصفية تلقائياً عند تغيير نوع الشعبة أو الفرع
+    classTypeFilter.addEventListener('change', filterBranches);
+    branchTypeFilter.addEventListener('change', filterBranches);
 });
 </script>
 {% endblock %}

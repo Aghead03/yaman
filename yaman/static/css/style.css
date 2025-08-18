@@ -39,7 +39,7 @@ body {
 
 /* التنسيق العام للرابط والأزرار */
 a {
-    text-decoration: none;
+    text-decoration: none !important;
     color: var(--primary-color);
 }
 

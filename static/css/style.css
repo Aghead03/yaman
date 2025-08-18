@@ -16,6 +16,9 @@
     --border-radius: 8px;
     --box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     --transition: all 0.3s ease;
+    --sidebar-width: 250px;
+    --sidebar-collapsed-width: 70px;
+    --sidebar-transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* إعادة تعيين العناصر الأساسية */
@@ -106,51 +109,60 @@ a {
     background-color: #16a085;
 }
 
-/* تنسيق الشريط الجانبي */
+/* تصميم السايدبار الأساسي */
 .sidebar {
-    width: 250px;
+    width: var(--sidebar-width);
     height: 100vh;
     position: fixed;
     right: 0;
     top: 0;
-    background-color: var(--dark-color);
-    color: var(--white);
-    transition: var(--transition);
+    background: linear-gradient(180deg, #2c3e50 0%, #1a252f 100%);
+    color: white;
+    transition: var(--sidebar-transition);
     z-index: 1000;
-    overflow-y: auto; /* التمرير العمودي عند الحاجة */
+    overflow-y: auto;
+    box-shadow: 5px 0 15px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: var(--primary-color) rgba(0,0,0,0.1);
 }
 
-
-/* تخصيص شريط التمرير لأفضل مظهر */
+/* تحسينات شريط التمرير */
 .sidebar::-webkit-scrollbar {
-    width: 8px;
+    width: 6px;
+    height: 6px;
 }
 
 .sidebar::-webkit-scrollbar-track {
-    background: var(--dark-color);
+    background: rgba(0,0,0,0.1);
+    border-radius: 3px;
 }
 
 .sidebar::-webkit-scrollbar-thumb {
     background-color: var(--primary-color);
     border-radius: 4px;
+    transition: var(--transition);
 }
 
 .sidebar::-webkit-scrollbar-thumb:hover {
-    background: #555;
+    background-color: #2980b9;
 }
+
+/* هيدر السايدبار */
 .sidebar-header {
     padding: 1.5rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    text-align: center;
-
-}
-
-.sidebar-logo {
-    width: 100px;
-    height: auto;
-    margin-bottom: 1rem;
-    background-color: #ecf0f1;
-    border-radius: 10%;
+    position: sticky;
+    top: 0;
+    background-color: var(--dark-color);
+    z-index: 10;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: var(--sidebar-transition);
 }
 
 .user-info {
@@ -167,38 +179,65 @@ a {
     font-size: 0.8rem;
 }
 
+/* عناصر القائمة */
 .sidebar-menu {
+    flex-grow: 1;
     padding: 1rem 0;
 }
 
 .menu-item {
-    padding: 0.8rem 1.5rem;
     display: flex;
     align-items: center;
-    gap: 1rem;
+    padding: 0.8rem 1.5rem;
+    margin: 0.2rem 1rem;
+    border-radius: var(--border-radius);
+    transition: var(--sidebar-transition);
+    color: rgba(255, 255, 255, 0.9);
     cursor: pointer;
-    transition: var(--transition);
-    color: var(--light-color);
+    position: relative;
+    gap: 1rem;
 }
 
 .menu-item:hover {
-    background-color: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateX(-5px);
 }
 
+/* تأثير النقر المؤقت */
+.menu-item:active {
+    transform: scale(0.98);
+    opacity: 0.9;
+}
+
+/* الحالة الدائمة بعد النقر */
 .menu-item.active {
     background-color: var(--primary-color);
+    color: var(--white);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.menu-item.active:hover {
+    background-color: var(--primary-color);
+    opacity: 0.9;
 }
 
 .menu-item i {
-    width: 20px;
-    text-align: center;
+    font-size: 1.2rem;
+    min-width: 24px;
+    transition: var(--sidebar-transition);
+}
+
+.menu-item span {
+    margin-right: 0.8rem;
+    white-space: nowrap;
+    transition: var(--sidebar-transition);
 }
 
 /* تنسيق المحتوى الرئيسي */
 .main-content {
-    margin-right: 250px;
+    margin-right: var(--sidebar-width);
     padding: 1.5rem;
-    transition: var(--transition);
+    transition: var(--sidebar-transition);
 }
 
 .header {
@@ -490,15 +529,12 @@ textarea {
 .logo {
     text-align: center;
     padding: 2rem 1rem 1rem;
-
 }
 
 .logo img {
     width: 100px;
     height: auto;
     margin-bottom: 1rem;
-    /* background-color: #ecf0f1; */
-    /* border-radius: 10px; */
 }
 
 .logo h1 {
@@ -1275,64 +1311,127 @@ textarea {
     font-size: 0.8rem;
 }
 
+/* تأثيرات خاصة */
+.sidebar-collapse .menu-item {
+    animation: fadeIn 0.3s ease forwards;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateX(20px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+/* زر التبديل (إضافي) */
+.sidebar-toggle {
+    display: none;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    font-size: 1.2rem;
+    cursor: pointer;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+}
+
+.sidebar-toggle:hover {
+    transform: scale(1.1);
+}
+
 /* تنسيقات متجاوبة */
+@media (max-width: 1200px) {
+    .sidebar {
+        width: 220px;
+    }
+    .menu-item {
+        padding: 0.7rem 1.2rem;
+    }
+}
+
 @media (max-width: 992px) {
     .sidebar {
-        width: 70px;
-        overflow: hidden;
+        width: var(--sidebar-collapsed-width);
+        overflow-x: hidden;
     }
-    
-    .sidebar-header, .user-info, .menu-item span {
-        display: none;
+    .sidebar-header {
+        padding: 1rem 0.5rem;
     }
-    
     .menu-item {
         justify-content: center;
-        padding: 1rem;
+        padding: 1rem 0;
+        margin: 0.2rem 0;
     }
-    
+    .menu-item span {
+        display: none;
+    }
+    .menu-item i {
+        font-size: 1.4rem;
+        margin: 0 auto;
+    }
+    .menu-item:hover {
+        transform: none;
+        background: rgba(255, 255, 255, 0.15);
+    }
     .main-content {
-        margin-right: 70px;
+        margin-right: var(--sidebar-collapsed-width);
     }
-    
     .profile-content {
         grid-template-columns: 1fr;
     }
-    
     .student-profile-container {
-        /* grid-template-columns: 1fr; */
+        grid-template-columns: 1fr;
     }
 }
 
 @media (max-width: 768px) {
+    .sidebar {
+        transform: translateX(100%);
+        width: 280px;
+        box-shadow: none;
+    }
+    .sidebar.active {
+        transform: translateX(0);
+        box-shadow: 5px 0 15px rgba(0, 0, 0, 0.2);
+    }
+    .sidebar-toggle {
+        display: block !important;
+        position: fixed;
+        right: 20px;
+        top: 20px;
+        z-index: 1100;
+    }
     .form-row {
         flex-direction: column;
         gap: 0;
     }
-    
     .dashboard-cards {
         grid-template-columns: 1fr 1fr;
     }
-    
     .report-cards, .profile-stats {
         grid-template-columns: 1fr;
     }
-    
     .groups-container {
         grid-template-columns: 1fr;
     }
 }
 
 @media (max-width: 576px) {
+    .sidebar {
+        width: 100%;
+        right: -100%;
+    }
+    .sidebar.active {
+        right: 0;
+    }
     .dashboard-cards {
         grid-template-columns: 1fr;
     }
-    
     .modal-content {
         width: 95%;
         margin: 1rem auto;
     }
-    
     .student-stats {
         grid-template-columns: 1fr;
     }

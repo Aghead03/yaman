@@ -49,6 +49,7 @@
                         <th>المادة</th>
                         <th>الفرع</th>
                         <th>نوع العقد</th>
+                        <th>الاجرائات </th>
                     </tr>
                     <tr>
                         {% for teacher in  teacher %}
@@ -57,6 +58,9 @@
                         <td>{{teacher.subject}}</td>
                         <td>{{teacher.branches}}</td>
                         <td>{{teacher.contract_type}}</td>
+                        <td>
+                            <a href="{% url 'employ:delete_teacher' teacher.pk %}" class="btn btn-danger btn-sm">حذف</a>
+                        </td>
                     </tr>
                     {% endfor %}
                 </thead>

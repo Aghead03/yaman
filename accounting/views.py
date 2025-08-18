@@ -1,12 +1,15 @@
 from django.views import generic
 from django.urls import reverse_lazy,reverse
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Sum, Count ,Q
+from django.db.models import Sum, Count ,Q , F
 from datetime import datetime, timedelta
 from .models import Payment, Transaction
 from django.http import JsonResponse
-from .forms import PaymentForm, IncomeForm, ExpenseForm
+from .forms import PaymentForm, IncomeForm, ExpenseForm ,SettlementForm
 from django.utils import timezone
+from students.models import Student
+from django.db.models import Case, When, Value, BooleanField
+
 
 class AccountingHomeView(LoginRequiredMixin, generic.TemplateView):
     template_name = 'accounting/accounting.html'
@@ -15,7 +18,7 @@ class AccountingHomeView(LoginRequiredMixin, generic.TemplateView):
         context = super().get_context_data(**kwargs)
         
         # تحديد التبويب النشط
-        active_tab = self.request.GET.get('tab', 'payments')
+        active_tab = self.request.GET.get('tab', 'students')
         
         # بيانات تبويب الدفعات
         payments = Payment.objects.all().order_by('-date')
@@ -104,10 +107,29 @@ class AccountingHomeView(LoginRequiredMixin, generic.TemplateView):
             income_data.append(income)
             expense_data.append(expense)
         
+        # تصفية الطلاب حسب حالة الدفع
+        payment_status = self.request.GET.get('payment_status')
+        students = Student.objects.annotate(
+            total_required=Sum('payments__required_amount', default=0),
+            total_paid=Sum('payments__amount', default=0),
+            is_paid_in_full=Case(
+                When(total_paid__gte=F('total_required'), then=Value(True)),
+                default=Value(False),
+                output_field=BooleanField()
+            )
+        ).order_by('full_name')
+        
+        if payment_status == 'paid':
+            students = students.filter(is_paid_in_full=True)
+        elif payment_status == 'unpaid':
+            students = students.filter(is_paid_in_full=False)
+        
         context.update({
             'active_tab': active_tab,
             'payments': payments,
             'transactions': transactions,
+            'students': students,
+            'payment_status_filter': payment_status,
             'total_income': total_income,
             'total_expenses': total_expenses,
             'cash_balance': cash_balance,
@@ -137,6 +159,7 @@ class AccountingHomeView(LoginRequiredMixin, generic.TemplateView):
         
         return context
 
+
 class PaymentCreateView(LoginRequiredMixin, generic.CreateView):
     model = Payment
     form_class = PaymentForm
@@ -145,13 +168,18 @@ class PaymentCreateView(LoginRequiredMixin, generic.CreateView):
 
     def form_valid(self, form):
         form.instance.created_by = self.request.user
-        return super().form_valid(form)
+        response = super().form_valid(form)
+        
+        # لا داعي لإنشاء المعاملة هنا لأنها تتم تلقائياً في save() method للنموذج
+        return response
+
 
 class PaymentUpdateView(LoginRequiredMixin, generic.UpdateView):
     model = Payment
     form_class = PaymentForm
     template_name = 'accounting/payment_form.html'
     success_url = reverse_lazy('accounting:accounting')
+
 
 class PaymentDeleteView(LoginRequiredMixin, generic.DeleteView):
     model = Payment
@@ -164,17 +192,20 @@ class PaymentDeleteView(LoginRequiredMixin, generic.DeleteView):
         self.object.delete()
         return JsonResponse({'success': True, 'redirect_url': success_url})
 
+
 class IncomeCreateView(LoginRequiredMixin, generic.CreateView):
     model = Transaction
     form_class = IncomeForm
     template_name = 'accounting/transaction_form.html'
+    
     def get_success_url(self):
-        return reverse('accounting:accounting')
+        return reverse('accounting:accounting') + '?tab=cash'
 
     def form_valid(self, form):
         form.instance.type = 'income'
         form.instance.user = self.request.user
         return super().form_valid(form)
+
 
 class ExpenseCreateView(LoginRequiredMixin, generic.CreateView):
     model = Transaction
@@ -187,6 +218,7 @@ class ExpenseCreateView(LoginRequiredMixin, generic.CreateView):
         form.instance.user = self.request.user
         return super().form_valid(form)
 
+
 class TransactionUpdateView(LoginRequiredMixin, generic.UpdateView):
     model = Transaction
     template_name = 'accounting/transaction_form.html'
@@ -196,6 +228,7 @@ class TransactionUpdateView(LoginRequiredMixin, generic.UpdateView):
         if self.object.type == 'income':
             return IncomeForm
         return ExpenseForm
+
 
 class TransactionDeleteView(LoginRequiredMixin, generic.DeleteView):
     model = Transaction
@@ -208,9 +241,90 @@ class TransactionDeleteView(LoginRequiredMixin, generic.DeleteView):
         self.object.delete()
         return JsonResponse({'success': True, 'redirect_url': success_url})
 
+
 class ReceiptDetailView(LoginRequiredMixin, generic.DetailView):
     model = Payment
     template_name = 'accounting/receipt.html'
-    
+
+
 class reports(generic.TemplateView):
     template_name = 'accounting/reports.html'
+
+
+class StudentAccountView(LoginRequiredMixin, generic.DetailView):
+    model = Student
+    template_name = 'accounting/student_account.html'
+    context_object_name = 'student'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        student = self.object
+        payments = student.payments.all().order_by('-date')
+        
+        total_required = payments.aggregate(Sum('required_amount'))['required_amount__sum'] or 0
+        total_paid = payments.aggregate(Sum('amount'))['amount__sum'] or 0
+        balance = total_required - total_paid
+        
+        context.update({
+            'payments': payments,
+            'total_required': total_required,
+            'total_paid': total_paid,
+            'balance': balance,
+            'is_paid_in_full': balance <= 0
+        })
+        return context
+    
+    
+    
+    
+
+from django.http import JsonResponse, HttpResponseRedirect
+
+
+
+class SettlementCreateView(LoginRequiredMixin, generic.CreateView):
+    model = Payment
+    form_class = SettlementForm
+    template_name = 'accounting/settlement_form.html'
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        student_id = self.request.GET.get('student')
+        if student_id:
+            kwargs['student'] = Student.objects.get(id=student_id)
+        return kwargs
+
+    def form_valid(self, form):
+        student_id = self.request.GET.get('student')
+        if student_id:
+            student = Student.objects.get(id=student_id)
+            payments = student.payments.all()
+            total_required = payments.aggregate(Sum('required_amount'))['required_amount__sum'] or 0
+            total_paid = payments.aggregate(Sum('amount'))['amount__sum'] or 0
+            balance = total_required - total_paid
+
+            if form.instance.amount == balance:
+                form.instance.student = student
+                form.instance.payment_type = 'installment'
+                form.instance.required_amount = form.instance.amount
+                form.instance.date = timezone.now().date()
+                form.instance.payment_method = 'cash'
+                form.instance.created_by = self.request.user
+                
+                # حفظ النموذج بدون استخدام super().form_valid
+                self.object = form.save()
+                
+                # إنشاء حركة مالية
+                Transaction.objects.create(
+                    type='income',
+                    amount=form.instance.amount,
+                    date=form.instance.date,
+                    description=f"تسديد حساب الطالب {student.full_name}",
+                    user=self.request.user
+                )
+
+                return HttpResponseRedirect(reverse('accounting:student_account', kwargs={'pk': student.id}))
+            else:
+                form.add_error('amount', 'المبلغ المدخل يجب أن يساوي الرصيد المتبقي')
+                return self.form_invalid(form)
+        return super().form_invalid(form)

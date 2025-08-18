@@ -39,3 +39,7 @@ class IndexView(LoginRequiredMixin, TemplateView):
         context['recent_activities'] = LogEntry.objects.select_related('user').order_by('-action_time')[:10]
         
         return context
+    
+    
+class welcome(TemplateView):
+    template_name =   'pages/welcome.html'  

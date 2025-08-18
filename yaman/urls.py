@@ -19,3 +19,4 @@ urlpatterns = [
     path('classroom/', include('classroom.urls')),
     path('registration/', include('registration.urls')),
 ]
+

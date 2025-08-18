@@ -16,7 +16,20 @@
                 {{ form.student.errors }}
             </div>
             <div class="form-col">
-                <label for="{{ form.amount.id_for_label }}">المبلغ:</label>
+                <label for="{{ form.payment_type.id_for_label }}">نوع الدفعة:</label>
+                {{ form.payment_type }}
+                {{ form.payment_type.errors }}
+            </div>
+        </div>
+        
+        <div class="form-row">
+            <div class="form-col">
+                <label for="{{ form.required_amount.id_for_label }}">المبلغ المطلوب:</label>
+                {{ form.required_amount }}
+                {{ form.required_amount.errors }}
+            </div>
+            <div class="form-col">
+                <label for="{{ form.amount.id_for_label }}">المبلغ المدفوع:</label>
                 {{ form.amount }}
                 {{ form.amount.errors }}
             </div>
@@ -37,16 +50,6 @@
         
         <div class="form-row">
             <div class="form-col">
-                <label for="{{ form.is_full.id_for_label }}">حالة الدفع:</label>
-                <div class="checkbox-container">
-                    {{ form.is_full }}
-                    <label for="{{ form.is_full.id_for_label }}">دفعة كاملة</label>
-                </div>
-            </div>
-        </div>
-        
-        <div class="form-row">
-            <div class="form-col">
                 <label for="{{ form.notes.id_for_label }}">ملاحظات:</label>
                 {{ form.notes }}
                 {{ form.notes.errors }}
@@ -59,4 +62,28 @@
         </div>
     </form>
 </div>
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const paymentTypeSelect = document.getElementById('id_payment_type');
+    const requiredAmountInput = document.getElementById('id_required_amount');
+    
+    if (paymentTypeSelect && requiredAmountInput) {
+        paymentTypeSelect.addEventListener('change', function() {
+            if (this.value === 'settlement') {
+                requiredAmountInput.readOnly = true;
+                // يمكنك إضافة كود لحساب الرصيد المتبقي هنا إذا لزم الأمر
+            } else {
+                requiredAmountInput.readOnly = false;
+            }
+        });
+        
+        // تطبيق الحالة الأولية عند تحميل الصفحة
+        if (paymentTypeSelect.value === 'settlement') {
+            requiredAmountInput.readOnly = true;
+        }
+    }
+});
+</script>
+{% endblock %}
 {% endblock %}

@@ -1,24 +1,30 @@
 from django import forms
+from django.forms import modelformset_factory 
 from .models import Grade
-from courses.models import Subject
 
 class GradeForm(forms.ModelForm):
     class Meta:
         model = Grade
-        fields = ['student', 'subject', 'grade', 'exam_type', 'notes']
+        fields = ['student', 'subject', 'exam_type', 'grade', 'notes', 'classroom']
+        widgets = {
+            'student': forms.HiddenInput(),
+            'subject': forms.HiddenInput(),
+            'exam_type': forms.HiddenInput(),
+            'classroom': forms.HiddenInput(),
+            'grade': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'min': 0,
+                'max': 100,
+                'step': 0.1
+            }),
+            'notes': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'أدخل الملاحظات هنا'
+            })
+        }
 
-    def __init__(self, *args, **kwargs):
-        subject_choices = kwargs.pop('subject_choices', None)
-        classroom_id = kwargs.pop('classroom_id', None)
-        super().__init__(*args, **kwargs)
-        
-        if subject_choices:
-            subjects = [cs.subject for cs in subject_choices]
-            self.fields['subject'].queryset = Subject.objects.filter(
-                id__in=[s.id for s in subjects]
-            )
-        
-        if classroom_id:
-            self.fields['student'].queryset = self.fields['student'].queryset.filter(
-                classroom_enrollments__classroom_id=classroom_id
-            )
+GradeFormSet = modelformset_factory(  
+    Grade,
+    form=GradeForm,
+    extra=0
+)

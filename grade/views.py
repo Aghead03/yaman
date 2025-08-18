@@ -1,96 +1,88 @@
-from django.shortcuts import get_object_or_404
-from django.views.generic import ListView, CreateView ,TemplateView
-from django.urls import reverse
-from django.db.models import Avg
+from django.shortcuts import render, redirect, get_object_or_404
+from django.forms import modelformset_factory
 from .models import Grade
+from classroom.models import Classroom
+from courses.models import Subject
+from students.models import Student
 from .form import GradeForm
 
-from classroom.models import Classroom,ClassroomSubject
-from students.models import Student
+def grades_dashboard(request):
+    classrooms = Classroom.objects.all()
+    return render(request, 'grade/dashboard.html', {'classrooms': classrooms})
 
-class grades(TemplateView):
-    template_name = 'grade/grades.html'
+def view_grades(request, classroom_id, subject_id):
+    # صفحة عرض العلامات (للقراءة فقط)
+    classroom = get_object_or_404(Classroom, pk=classroom_id)
+    subject = get_object_or_404(Subject, pk=subject_id)
     
-class GradeDashboardView(TemplateView):
-    template_name = 'grade/grades.html'
+    grades = Grade.objects.filter(
+        classroom=classroom,
+        subject=subject
+    ).select_related('student')
     
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['classrooms'] = Classroom.objects.all()
-        return context
+    return render(request, 'grade/view_grades.html', {
+        'classroom': classroom,
+        'subject': subject,
+        'grades': grades
+    })
 
-class GradeClassroomListView(ListView):
-    model = Classroom
-    template_name = 'grade/classroom_list.html'
-    context_object_name = 'classrooms'
+def edit_grades(request, classroom_id, subject_id):
+    classroom = get_object_or_404(Classroom, pk=classroom_id)
+    subject = get_object_or_404(Subject, pk=subject_id)
     
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['is_grades'] = True  # للتمييز إذا كنت في قسم العلامات
-        return context    
-
-class GradeListView(ListView):
-    model = Grade
-    template_name = 'grades/grade_list.html'
-    context_object_name = 'grades'
+    GradeFormSet = modelformset_factory(Grade, form=GradeForm, extra=0)
+    students = classroom.students.all().order_by('full_name')
     
-    def get_queryset(self):
-        classroom_id = self.kwargs['classroom_id']
-        # استخدم العلاقة الصحيحة عبر Classroomenrollment
-        return Grade.objects.filter(
-            student__classroom_enrollments__classroom_id=classroom_id
-        ).select_related('student', 'subject')
-    
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        classroom_id = self.kwargs['classroom_id']
-        classroom = get_object_or_404(Classroom, id=classroom_id)
+    if request.method == 'POST':
+        formset = GradeFormSet(request.POST, request.FILES)
+        if formset.is_valid():
+            instances = formset.save(commit=False)
+            for instance in instances:
+                instance.classroom = classroom
+                instance.subject = subject
+                instance.save()
+            return redirect('grade:view_grades', classroom.id, subject.id)
+    else:
+        # جلب العلامات الموجودة للمادة الحالية فقط
+        grades = Grade.objects.filter(
+            classroom=classroom,
+            subject=subject
+        )
         
-        # جلب الطلاب المسجلين في هذه الشعبة
-        students = Student.objects.filter(
-            classroom_enrollments__classroom=classroom
-        ).distinct()
+        # إنشاء علامات للطلاب المفقودين فقط
+        existing_student_ids = grades.values_list('student_id', flat=True)
+        missing_students = students.exclude(id__in=existing_student_ids)
         
-        # جلب مواد الشعبة
-        subjects = ClassroomSubject.objects.filter(
-            classroom=classroom
-        ).select_related('subject')
+        new_grades = []
+        for student in missing_students:
+            for exam_type in ['activity', 'monthly', 'midterm', 'final']:
+                new_grades.append(Grade(
+                    student=student,
+                    classroom=classroom,
+                    subject=subject,
+                    exam_type=exam_type,
+                    grade=0,
+                    notes=''
+                ))
         
-        context.update({
-            'classroom': classroom,
-            'students': students,
-            'subjects': subjects
-        })
-        return context
-
-class GradeCreateView(CreateView):
-    model = Grade
-    form_class = GradeForm
-    template_name = 'grade/grade_form.html'
+        if new_grades:
+            Grade.objects.bulk_create(new_grades)
+            grades = Grade.objects.filter(classroom=classroom, subject=subject)
+        
+        formset = GradeFormSet(queryset=grades)
     
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        classroom_id = self.kwargs['classroom_id']
-        classroom_subjects = ClassroomSubject.objects.filter(
-            classroom_id=classroom_id
-        ).select_related('subject')
-        kwargs['subject_choices'] = classroom_subjects
-        kwargs['classroom_id'] = classroom_id
-        return kwargs
+    return render(request, 'grade/edit_grades.html', {
+        'classroom': classroom,
+        'subject': subject,
+        'formset': formset,
+        'students': students
+    })
     
-    def form_valid(self, form):
-        form.instance.student = form.cleaned_data['student']
-        return super().form_valid(form)
+def select_subject(request, classroom_id):
+    classroom = get_object_or_404(Classroom, pk=classroom_id)
+    subjects = classroom.classroomsubject_set.all()  
     
-    def get_success_url(self):
-        enrollment = self.object.student.classroom_enrollments.first()
-        if enrollment:
-            return reverse('grade:grade_list', kwargs={
-                'classroom_id': enrollment.classroom.id
-            })
-        return reverse('grade:grade_dashboard')  # صفحة بديلة إذا لم يكن الطالب مسجلاً في أي فصل
-    
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['classroom'] = get_object_or_404(Classroom, id=self.kwargs['classroom_id'])
-        return context
+    return render(request, 'grade/select_subject.html', {
+        'classroom': classroom,
+        'subjects': subjects
+    })  

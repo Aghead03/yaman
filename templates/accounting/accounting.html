@@ -5,14 +5,14 @@
     <h2>النظام المالي</h2>
     <div class="actions">
         <div class="btn-group">
-            <button class="btn btn-primary dropdown-toggle" data-toggle="dropdown">
+            <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
                 <i class="fas fa-plus"></i> إضافة جديد
             </button>
-            <div class="dropdown-menu">
-                <a class="dropdown-item" href="{% url 'accounting:add_payment' %}">دفعة طالب</a>
-                <a class="dropdown-item" href="{% url 'accounting:add_income' %}">وارد مالي</a>
-                <a class="dropdown-item" href="{% url 'accounting:add_expense' %}">منصرف مالي</a>
-            </div>
+            <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="{% url 'accounting:add_payment' %}">دفعة طالب</a></li>
+                <li><a class="dropdown-item" href="{% url 'accounting:add_income' %}">وارد مالي</a></li>
+                <li><a class="dropdown-item" href="{% url 'accounting:add_expense' %}">منصرف مالي</a></li>
+            </ul>
         </div>
         <button id="exportFinance" class="btn btn-success">
             <i class="fas fa-file-export"></i> تصدير
@@ -21,12 +21,82 @@
 </div>
 
 <div class="tabs">
-    <div class="tab active" data-tab="payments">سجل الدفعات</div>
-    <div class="tab" data-tab="cash">حركة الصندوق</div>
-    <div class="tab" data-tab="reports">التقارير المالية</div>
+    <div class="tab {% if active_tab == 'students' %}active{% endif %}" data-tab="students">حسابات الطلاب</div>
+    <div class="tab {% if active_tab == 'payments' %}active{% endif %}" data-tab="payments">سجل الدفعات</div>
+    <div class="tab {% if active_tab == 'cash' %}active{% endif %}" data-tab="cash">حركة الصندوق</div>
+    <div class="tab {% if active_tab == 'reports' %}active{% endif %}" data-tab="reports">التقارير المالية</div>
 </div>
 
-<div class="tab-content active" id="payments">
+<div class="tab-content {% if active_tab == 'students' %}active{% endif %}" id="students">
+    <div class="filters">
+        <form method="get" id="studentsFilterForm">
+            <div class="form-row">
+                <div class="form-col">
+                    <label>حالة الدفع:</label>
+                    <select name="payment_status" class="form-control">
+                        <option value="">الكل</option>
+                        <option value="paid" {% if request.GET.payment_status == 'paid' %}selected{% endif %}>مسددون بالكامل</option>
+                        <option value="unpaid" {% if request.GET.payment_status == 'unpaid' %}selected{% endif %}>غير مسددين</option>
+                    </select>
+                </div>
+                <div class="form-col">
+                    <button type="submit" class="btn btn-secondary">
+                        <i class="fas fa-filter"></i> تصفية
+                    </button>
+                    <button type="button" id="resetStudentsFilters" class="btn btn-outline-secondary">
+                        <i class="fas fa-undo"></i> إعادة تعيين
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+    
+    <div class="table-container">
+        <table id="studentsTable">
+            <thead>
+                <tr>
+                    <th>اسم الطالب</th>
+                    <th>إجمالي المطلوب</th>
+                    <th>إجمالي المدفوع</th>
+                    <th>الرصيد</th>
+                    <th>الحالة</th>
+                    <th>الإجراءات</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for student in students %}
+                <tr>
+                    <td>{{ student.full_name }}</td>
+                    <td>{{ student.total_required|default:0 }} ل.س</td>
+                    <td>{{ student.total_paid|default:0 }} ل.س</td>
+                    <td>{{ student.balance|default:0 }} ل.س</td>
+                    <td>
+                        <span class="badge {% if student.is_paid_in_full %}paid{% else %}unpaid{% endif %}">
+                            {% if student.is_paid_in_full %}مسدد{% else %}غير مسدد{% endif %}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="action-buttons">
+                            <a href="{% url 'accounting:student_account' student.id %}" class="btn btn-sm btn-info" title="عرض الحساب">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <a href="{% url 'accounting:add_payment' %}?student={{ student.id }}" class="btn btn-sm btn-primary" title="إضافة دفعة">
+                                <i class="fas fa-plus"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center">لا توجد نتائج</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="tab-content {% if active_tab == 'payments' %}active{% endif %}" id="payments">
     <div class="filters">
         <form method="get" id="paymentFilterForm">
             <div class="form-row">
@@ -64,7 +134,9 @@
                 <tr>
                     <th>رقم الإيصال</th>
                     <th>الطالب</th>
-                    <th>المبلغ</th>
+                    <th>نوع الدفعة</th>
+                    <th>المبلغ المطلوب</th>
+                    <th>المبلغ المدفوع</th>
                     <th>تاريخ الدفع</th>
                     <th>طريقة الدفع</th>
                     <th>الحالة</th>
@@ -76,6 +148,8 @@
                 <tr>
                     <td>#{{ payment.id }}</td>
                     <td>{{ payment.student.full_name }}</td>
+                    <td>{{ payment.get_payment_type_display }}</td>
+                    <td>{{ payment.required_amount }} ل.س</td>
                     <td>{{ payment.amount }} ل.س</td>
                     <td>{{ payment.date|date:"Y-m-d" }}</td>
                     <td>{{ payment.get_payment_method_display }}</td>
@@ -103,7 +177,7 @@
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="7" class="text-center">لا توجد دفعات مسجلة</td>
+                    <td colspan="9" class="text-center">لا توجد دفعات مسجلة</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -111,7 +185,7 @@
     </div>
 </div>
 
-<div class="tab-content" id="cash">
+<div class="tab-content {% if active_tab == 'cash' %}active{% endif %}" id="cash">
     <div class="filters">
         <form method="get" id="cashFilterForm">
             <div class="form-row">
@@ -131,6 +205,26 @@
                         <option value="expense" {% if request.GET.type == 'expense' %}selected{% endif %}>منصرف</option>
                     </select>
                 </div>
+                <div class="filtered-stats">
+                    <div class="stat-card">
+                        <div class="stat-info">
+                            <h3>الوارد المصفى</h3>
+                            <p>{{ filtered_income }} ل.س</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-info">
+                            <h3>المنصرف المصفى</h3>
+                            <p>{{ filtered_expenses }} ل.س</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-info">
+                            <h3>الرصيد المصفى</h3>
+                            <p>{{ filtered_balance }} ل.س</p>
+                        </div>
+                    </div>
+                </div>
                 <div class="form-col">
                     <button type="submit" class="btn btn-secondary">
                         <i class="fas fa-filter"></i> تصفية
@@ -143,7 +237,7 @@
         </form>
     </div>
 
-    <div class="report-cards">
+    <div class="tab-content {% if active_tab == 'reports' %}active{% endif %}">
         <div class="stat-card">
             {% comment %} <div class="stat-icon" style="background-color: var(--secondary-color);">
                 <i class="fas fa-money-bill-wave"></i>
@@ -330,20 +424,39 @@ document.addEventListener('DOMContentLoaded', function() {
     const tabs = document.querySelectorAll('.tab');
     const tabContents = document.querySelectorAll('.tab-content');
     
+    // تحديد التبويب النشط من URL أو استخدام القيمة الافتراضية
+    const urlParams = new URLSearchParams(window.location.search);
+    let activeTab = urlParams.get('tab') || 'students';
+    
+    // تفعيل التبويب والمحتوى النشطين عند التحميل
+    tabs.forEach(tab => {
+        if (tab.dataset.tab === activeTab) {
+            tab.classList.add('active');
+            document.getElementById(tab.dataset.tab).classList.add('active');
+        }
+    });
+    
+    // إضافة حدث النقر على التبويبات
     tabs.forEach(tab => {
         tab.addEventListener('click', () => {
+            const tabId = tab.getAttribute('data-tab');
+            
+            // تحديث عنوان URL بإضافة معلمة التبويب النشط
+            const url = new URL(window.location);
+            url.searchParams.set('tab', tabId);
+            window.history.pushState({}, '', url);
+            
             // إزالة النشاط من جميع التبويبات والمحتويات
             tabs.forEach(t => t.classList.remove('active'));
             tabContents.forEach(content => content.classList.remove('active'));
             
             // إضافة النشاط للتبويب والمحتوى المحدد
             tab.classList.add('active');
-            const tabId = tab.getAttribute('data-tab');
             document.getElementById(tabId).classList.add('active');
         });
     });
 
-    // حذف الدفعة/المعاملة (نفس الكود السابق)
+    // حذف الدفعة/المعاملة
     const deleteButtons = document.querySelectorAll('.delete-payment, .delete-transaction');
     deleteButtons.forEach(button => {
         button.addEventListener('click', function() {
@@ -368,6 +481,11 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // إعادة تعيين الفلاتر
+    document.getElementById('resetStudentsFilters').addEventListener('click', function() {
+        document.getElementById('studentsFilterForm').reset();
+        document.getElementById('studentsFilterForm').submit();
+    });
+
     document.getElementById('resetPaymentFilters').addEventListener('click', function() {
         document.getElementById('paymentFilterForm').reset();
         document.getElementById('paymentFilterForm').submit();
@@ -377,9 +495,34 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('cashFilterForm').reset();
         document.getElementById('cashFilterForm').submit();
     });
+
+    // إضافة معلمة التبويب إلى جميع نماذج التصفية
+    const filterForms = document.querySelectorAll('form[id$="FilterForm"]');
+    filterForms.forEach(form => {
+        form.addEventListener('submit', function(e) {
+            const activeTab = document.querySelector('.tab.active').dataset.tab;
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'tab';
+            input.value = activeTab;
+            this.appendChild(input);
+        });
+    });
+    
+    // إغلاق النافذة عند النقر خارجها
+    window.addEventListener('click', function(event) {
+        if (event.target === document.getElementById('deleteModal')) {
+            document.getElementById('deleteModal').style.display = 'none';
+        }
+        if (event.target === document.getElementById('exportModal')) {
+            document.getElementById('exportModal').style.display = 'none';
+        }
+    });
 });
+
 </script>
 {% endblock %}
+
 
 {% endblock %}
 

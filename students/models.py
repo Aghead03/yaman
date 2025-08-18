@@ -52,6 +52,10 @@ class Student(models.Model):
     )
     notes = models.TextField(blank=True, null=True)
     
+    @property
+    def grades(self):
+        """جميع علامات الطالب"""
+        return self.grade_set.all()
     
     def __str__(self):
         return self.full_name

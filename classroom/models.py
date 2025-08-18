@@ -1,6 +1,8 @@
 from django.db import models
 from students.models import Student
 from courses.models import Subject
+from django.core.exceptions import ValidationError
+
 
 # Create your models here.
 class Classroom(models.Model):
@@ -9,25 +11,42 @@ class Classroom(models.Model):
         SCIENTIFIC = 'علمي', 'العلمي'
         NINTH_GRADE = 'تاسع', 'الصف التاسع'
         
-    name = models.CharField(max_length=50, verbose_name='اسم الشعبة',default="الشعبة 1")
+    CLASS_TYPE_CHOICES = [
+        ('study', 'شعبة دراسية'),
+        ('course', 'دورة'),
+    ]
+    
+    name = models.CharField(max_length=50, verbose_name='اسم الشعبة', default="الشعبة 1")
+    class_type = models.CharField(
+        max_length=10,
+        choices=CLASS_TYPE_CHOICES,
+        verbose_name='نوع الشعبة',
+        default='study'
+    )
     branches = models.CharField(
-    max_length=100,
-    choices=BranchChoices.choices,
-    verbose_name='الفرع',
-    default=BranchChoices.SCIENTIFIC  # أو أي قيمة مناسبة
+        max_length=100,
+        choices=BranchChoices.choices,
+        verbose_name='الفرع',
+        blank=True,  # جعلها اختيارية
+        null=True
     )
     
+    def clean(self):
+        if self.class_type == 'study' and not self.branches:
+            raise ValidationError('يجب تحديد الفرع للشعبة الدراسية')
+        if self.class_type == 'course' and self.branches:
+            self.branches = None
     
     @property
     def students(self):
-        """إرجاع الطلاب المنتمين لهذه الشعبة حسب الفرع"""
         return Student.objects.filter(
-            classroom_enrollments__classroom=self,
-            branch=self.branches
+            classroom_enrollments__classroom=self
         )
     
     def __str__(self):
-        return f"{self.name} - {self.get_branches_display()}"
+        if self.class_type == 'study':
+            return f"{self.name} - {self.get_branches_display()}"
+        return f"{self.name} (دورة)"
     
     class Meta:
         verbose_name = 'شعبة'
@@ -40,6 +59,17 @@ class Classroomenrollment(models.Model):
     
     class Meta:
         unique_together = ('classroom', 'student')
+    
+    def clean(self):
+        # التحقق من أن الطالب ليس مسجلاً في شعبة دراسية أخرى إذا كانت هذه شعبة دراسية
+        if self.classroom.class_type == 'study':
+            existing_study_enrollment = Classroomenrollment.objects.filter(
+                student=self.student,
+                classroom__class_type='study'
+            ).exclude(classroom=self.classroom).exists()
+            
+            if existing_study_enrollment:
+                raise ValidationError('الطالب مسجل بالفعل في شعبة دراسية أخرى')
     
     def __str__(self):
         return f"{self.student} في {self.classroom}"     

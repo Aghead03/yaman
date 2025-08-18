@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="header">
+    <h2>تسديد حساب الطالب</h2>
+</div>
+
+<div class="form-container">
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+            {{ form.amount.label_tag }}
+            {{ form.amount }}
+            {% if form.amount.errors %}
+                <div class="error">{{ form.amount.errors }}</div>
+            {% endif %}
+        </div>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">تسديد</button>
+            <a href="{% url 'accounting:student_account' request.GET.student %}" class="btn btn-secondary">إلغاء</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

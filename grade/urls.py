@@ -1,14 +1,11 @@
-from django.contrib import admin
 from django.urls import path
 from . import views
 
-app_name = "grade"
+app_name = 'grade'
 
 urlpatterns = [
-    
-    path('grades/', views.GradeDashboardView.as_view(), name='grades'),
-    path('grades/classrooms/', views.GradeClassroomListView.as_view(), name='grade_classrooms'),
-    path('classroom/<int:classroom_id>/grades/', views.GradeListView.as_view(), name='grade_list')    ,
-    path('classroom/<int:classroom_id>/grades/add/', views.GradeCreateView.as_view(), name='grade_create'),
-    
+    path('', views.grades_dashboard, name='dashboard'),
+    path('<int:classroom_id>/subjects/', views.select_subject, name='select_subject'),  
+    path('<int:classroom_id>/subjects/<int:subject_id>/', views.view_grades, name='view_grades'),
+    path('<int:classroom_id>/subjects/<int:subject_id>/edit/', views.edit_grades, name='edit_grades'),
 ]

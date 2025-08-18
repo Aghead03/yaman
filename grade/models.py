@@ -26,8 +26,15 @@ class Grade(models.Model):
     )
     date = models.DateField(auto_now_add=True, verbose_name=_('تاريخ التسجيل'))
     notes = models.TextField(blank=True, null=True, verbose_name=_('ملاحظات'))
+    classroom = models.ForeignKey(
+        'classroom.Classroom', 
+        on_delete=models.CASCADE,
+        verbose_name="الشعبة",
+        null=True  # مؤقتاً للسماح بالقيم الفارغة
+    )
     
     class Meta:
+        unique_together = ('student', 'subject', 'exam_type')
         verbose_name = _('علامة')
         verbose_name_plural = _('العلامات')
         ordering = ['-date', 'student__full_name']

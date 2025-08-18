@@ -6,6 +6,9 @@ from .models import Classroom ,Classroomenrollment ,ClassroomSubject
 from .form import ClassroomForm ,ClassroomSubjectForm
 from students.models import Student
 
+from django.db import IntegrityError
+from django.core.exceptions import ValidationError
+
 
 
 
@@ -37,19 +40,31 @@ class AssignStudentsView(View):
 
     def get(self, request, classroom_id):
         classroom = get_object_or_404(Classroom, id=classroom_id)
-        enrollments = Classroomenrollment.objects.filter(classroom=classroom)
         
-        # تصفية الطلاب غير المعينين حسب فرع الشعبة
-        unassigned_students = Student.objects.filter(
-        branch__iexact=classroom.branches
-        ).exclude(
-            id__in=enrollments.values_list('student__id', flat=True)
-        )
+        # الحصول على الطلاب المسجلين في هذه الشعبة
+        current_enrollments = Classroomenrollment.objects.filter(classroom=classroom)
+        assigned_students = [e.student for e in current_enrollments]
+        
+        if classroom.class_type == 'study':
+            # للشعبة الدراسية: نعرض فقط الطلاب غير مسجلين في أي شعبة دراسية ومن نفس الفرع
+            enrolled_in_study = Classroomenrollment.objects.filter(
+                classroom__class_type='study'
+            ).values_list('student__id', flat=True)
+            
+            available_students = Student.objects.filter(
+                branch=classroom.branches
+            ).exclude(
+                id__in=enrolled_in_study
+            )
+        else:
+            # للدورة: نعرض جميع الطلاب غير مسجلين في هذه الدورة
+            enrolled_in_course = current_enrollments.values_list('student__id', flat=True)
+            available_students = Student.objects.exclude(id__in=enrolled_in_course)
         
         return render(request, self.template_name, {
             'classroom': classroom,
-            'unassigned_students': unassigned_students,
-            'assigned_students': [e.student for e in enrollments]
+            'unassigned_students': available_students,
+            'assigned_students': assigned_students
         })
 
     def post(self, request, classroom_id):
@@ -58,15 +73,19 @@ class AssignStudentsView(View):
 
         if student_ids:
             for student_id in student_ids:
-                # التحقق من أن الطالب من نفس الفرع قبل الإضافة
                 student = get_object_or_404(Student, id=student_id)
-                if student.branch == classroom.branches:
-                    Classroomenrollment.objects.get_or_create(
-                        student_id=student_id,
+                
+                try:
+                    Classroomenrollment.objects.create(
+                        student=student,
                         classroom=classroom,
                     )
-                else:
-                    messages.warning(request, f'الطالب {student.full_name} ليس من فرع {classroom.get_branches_display()}')
+                except ValidationError as e:
+                    messages.error(request, str(e))
+                    continue
+                except IntegrityError:
+                    messages.warning(request, f'الطالب {student.full_name} مسجل بالفعل في هذه الشعبة')
+                    continue
             
             messages.success(request, 'تم تعيين الطلاب للشعبة بنجاح')
         
@@ -89,10 +108,17 @@ class ClassroomStudentsView(ListView):
 
     def get_queryset(self):
         classroom = get_object_or_404(Classroom, id=self.kwargs['classroom_id'])
-        return Student.objects.filter(
-            classroom_enrollments__classroom=classroom,
-            branch=classroom.branches  
-        )
+        if classroom.class_type == 'study':
+            # للشعبة الدراسية: نراعي الفرع
+            return Student.objects.filter(
+                classroom_enrollments__classroom=classroom,
+                branch=classroom.branches
+            )
+        else:
+            # للدورة: نعرض جميع الطلاب المسجلين بغض النظر عن الفرع
+            return Student.objects.filter(
+                classroom_enrollments__classroom=classroom
+            )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

@@ -1,14 +1,34 @@
 from django import forms
 from .models import Payment, Transaction
+from django.db.models import Sum, Count ,Q , F
+
 
 class PaymentForm(forms.ModelForm):
     class Meta:
         model = Payment
-        fields = ['student', 'amount', 'date', 'payment_method', 'is_full', 'notes']
+        fields = ['student', 'payment_type', 'required_amount', 'amount', 'date', 'payment_method', 'notes']
         widgets = {
             'date': forms.DateInput(attrs={'type': 'date'}),
             'notes': forms.Textarea(attrs={'rows': 3}),
         }
+
+class SettlementForm(forms.ModelForm):
+    class Meta:
+        model = Payment
+        fields = ['amount']
+        widgets = {
+            'amount': forms.NumberInput(attrs={'class': 'form-control'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        self.student = kwargs.pop('student', None)
+        super().__init__(*args, **kwargs)
+        if self.student:
+            payments = self.student.payments.all()
+            total_required = payments.aggregate(Sum('required_amount'))['required_amount__sum'] or 0
+            total_paid = payments.aggregate(Sum('amount'))['amount__sum'] or 0
+            self.fields['amount'].initial = total_required - total_paid
+            self.fields['amount'].label = f"المبلغ المتبقي للتسديد ({total_required - total_paid} ل.س)"
 
 class IncomeForm(forms.ModelForm):
     class Meta:
