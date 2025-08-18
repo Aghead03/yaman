@@ -83,6 +83,10 @@ class EmployeeCreateView(CreateView):
         create_groups() 
         return super().get(request, *args, **kwargs)
     
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(self.request, 'تم إضافة الموظف بنجاح مع تعيين كلمة السر')
+        return response
     
 @user_passes_test(lambda u: u.is_superuser)
 def select_employee(request):
