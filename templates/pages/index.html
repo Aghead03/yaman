@@ -46,12 +46,21 @@
                             <tr>
                                 <td>{{ forloop.counter }}</td>
                                 <td>
-                                    {{ activity.get_action_flag_display }} - 
-                                    {{ activity.content_type|capfirst }}: 
+                                    {{ activity.get_action_display }} - 
+                                    {{ activity.content_type }}: 
                                     {{ activity.object_repr }}
+                                    {% if activity.details %}
+                                    <br><small>{{ activity.details }}</small>
+                                    {% endif %}
                                 </td>
-                                <td>{{ activity.user.get_full_name }}</td>
-                                <td>{{ activity.action_time|date:"Y-m-d H:i" }}</td>
+                                <td>
+                                    {% if activity.user %}
+                                        {{ activity.user.get_full_name|default:activity.user.username }}
+                                    {% else %}
+                                        نظام
+                                    {% endif %}
+                                </td>
+                                <td>{{ activity.timestamp|date:"Y-m-d H:i" }}</td>
                             </tr>
                             {% empty %}
                             <tr>

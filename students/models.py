@@ -22,13 +22,14 @@ class Student(models.Model):
         NINTH_GRADE = 'تاسع', 'الصف التاسع'
     # Basic Information
     full_name = models.CharField( max_length=100)
-    
     gender = models.CharField( max_length=6, choices=Gender.choices)
     branch = models.CharField( max_length=10, choices=Academic_Track.choices)
     birth_date = models.DateField()
     student_number = models.CharField(max_length=20) 
     nationality = models.CharField( max_length=50)
     registration_date = models.DateField(default=datetime.now)
+    tase3 = models.IntegerField(default=0)
+    disease = models.TextField(blank=True, null=True)
     # Father Information
     father_name = models.CharField( max_length=100)
     father_job = models.CharField( max_length=100, blank=True, null=True)

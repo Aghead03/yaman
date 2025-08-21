@@ -17,6 +17,8 @@ class StudentForm(forms.ModelForm):
             'gender': 'الجنس',
             'branch': 'الصف',
             'birth_date': 'تاريخ الميلاد',
+            'tase3':'مجموع التاسع',
+            'disease':' امراض الطالب ',
             'student_number': 'رقم الطالب',
             'nationality': 'الجنسية',
             'registration_date': 'تاريخ التسجيل',
