@@ -51,6 +51,7 @@ class student_groups(TemplateView):
 def student_profile(request, student_id):
     student = get_object_or_404(Student, id=student_id)
     
+    # استخدام العلاقة الصحيحة من خلال related_name
     enrollments = Classroomenrollment.objects.filter(student=student).select_related('classroom')
     
     # حساب بيانات الحضور لكل شعبة

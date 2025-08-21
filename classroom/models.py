@@ -54,7 +54,7 @@ class Classroom(models.Model):
         
 class Classroomenrollment(models.Model):
     classroom = models.ForeignKey(Classroom, on_delete=models.CASCADE, related_name='enrollments')
-    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='classroom_enrollments')
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name="classroom_enrollments")
     enrolled_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:

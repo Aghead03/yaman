@@ -11,7 +11,7 @@ class Grade(models.Model):
         FINAL = 'final', _('نهائي')
         ACTIVITY = 'activity', _('نشاط')
     
-    student = models.ForeignKey(Student, on_delete=models.CASCADE, verbose_name=_('الطالب'))
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name="grades")
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE, verbose_name=_('المادة'))
     grade = models.DecimalField(
         max_digits=5, 
