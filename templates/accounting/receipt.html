@@ -3,72 +3,278 @@
 
 {% block content %}
 <div class="receipt-container">
-    <div class="receipt-header">
-        <div class="logo">
-            <img src="{% static "img/logo.png" %}" alt="الشعار">
-        </div>
-        <div class="info">
-            <h2>إيصال دفع</h2>
-            <p>رقم الإيصال: #{{ payment.id }}</p>
-            <p>التاريخ: {{ payment.date|date:"Y-m-d" }}</p>
-        </div>
-    </div>
-    
-    <div class="receipt-body">
-        <div class="receipt-row">
-            <div class="label">اسم الطالب:</div>
-            <div class="value">{{ payment.student.full_name }}</div>
-        </div>
-        <div class="receipt-row">
-            <div class="label">المبلغ:</div>
-            <div class="value">{{ payment.amount }} ل.س</div>
-        </div>
-        <div class="receipt-row">
-            <div class="label">طريقة الدفع:</div>
-            <div class="value">{{ payment.get_payment_method_display }}</div>
-        </div>
-        <div class="receipt-row">
-            <div class="label">حالة الدفع:</div>
-            <div class="value">
-                {% if payment.is_full %}مسدد بالكامل{% else %}دفعة جزئية{% endif %}
+    <div class="receipt">
+        <div class="header">
+            <div class="logo-section">
+                <img src="{% static 'img/logo.png' %}" class="receipt-logo">
+                <div class="institute-info">
+                    <h1>معهد اليمان</h1>
+                    <h2>AL Yaman Institute</h2>
+                </div>
+            </div>
+            <div class="receipt-title">
+                <h3>إيصال استلام / Payment Receipt</h3>
             </div>
         </div>
-        {% if payment.notes %}
-        <div class="receipt-row">
+        
+        <div class="receipt-info">
+            <div class="info-row">
+                <span class="label">رقم الإيصال:</span>
+                <span class="value">{{ object.id }}</span>
+            </div>
+            
+            <div class="info-row">
+                <span class="label">التاريخ:</span>
+                <span class="value">{{ object.date|date:"Y/m/d" }}</span>
+            </div>
+            
+            <div class="info-row">
+                <span class="label">اسم الطالب:</span>
+                <span class="value">{{ object.student.full_name }}</span>
+            </div>
+            
+            <div class="info-row">
+                <span class="label">رقم الطالب:</span>
+                <span class="value">{{ object.student.student_number }}</span>
+            </div>
+            
+            <div class="info-row">
+                <span class="label">نوع الدفع:</span>
+                <span class="value">{{ object.get_payment_type_display }}</span>
+            </div>
+            
+            <div class="info-row">
+                <span class="label">طريقة الدفع:</span>
+                <span class="value">{{ object.get_payment_method_display }}</span>
+            </div>
+        </div>
+        
+        <div class="amount-section">
+            <div class="amount-row">
+                <span class="label">المبلغ المطلوب:</span>
+                <span class="value">{{ object.required_amount|floatformat:2 }} ل.س</span>
+            </div>
+            <div class="amount-row">
+                <span class="label">المبلغ المدفوع:</span>
+                <span class="value">{{ object.amount|floatformat:2 }} ل.س</span>
+            </div>
+        </div>
+        
+        {% if object.notes %}
+        <div class="notes-section">
             <div class="label">ملاحظات:</div>
-            <div class="value">{{ payment.notes }}</div>
+            <div class="notes-content">{{ object.notes }}</div>
         </div>
         {% endif %}
-    </div>
-    
-    <div class="receipt-footer">
-        <div class="signature">
-            <p> شكرا لثقتكن بنا </p>
-            <div class="signature-line"></div>
+        
+        
+        <div class="footer">
+            <div class="contact-info">
+                <p>هاتف: 011 888 777 4 - 938 887 774</p>
+                <p>شكراً لثقتكم بنا / Thank you for your trust</p>
+            </div>
+            <div class="print-date">
+                تم الطباعة في: {% now "Y/m/d H:i" %}
+            </div>
         </div>
     </div>
 </div>
 
-<div class="print-actions">
-    <button onclick="window.print()" class="btn btn-primary">
-        <i class="fas fa-print"></i> طباعة
-    </button>
-    <a href="{% url 'accounting:accounting' %}" class="btn btn-secondary">
-        <i class="fas fa-arrow-left"></i> رجوع
-    </a>
-</div>
+<script>
+    window.onload = function() {
+        window.print();
+    }
+</script>
 
 <style>
+/* التنسيق العام */
+.receipt-container {
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+    background: #f5f5f5;
+    min-height: 100vh;
+}
+
+.receipt {
+    width: 80mm;
+    background: white;
+    padding: 15px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    border: 1px solid #ddd;
+    font-family: 'Arial', sans-serif;
+}
+
+/* الهيدر */
+.header {
+    text-align: center;
+    margin-bottom: 15px;
+    border-bottom: 2px solid #2c5aa0;
+    padding-bottom: 10px;
+}
+
+.logo-section {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 10px;
+}
+
+.receipt-logo {
+    width: 50px;
+    height: 50px;
+    margin-left: 10px;
+}
+
+.institute-info h1 {
+    margin: 0;
+    font-size: 18px;
+    color: #2c5aa0;
+    font-weight: bold;
+}
+
+.institute-info h2 {
+    margin: 2px 0 0 0;
+    font-size: 12px;
+    color: #666;
+}
+
+.receipt-title h3 {
+    margin: 10px 0 0 0;
+    font-size: 14px;
+    color: #333;
+    font-weight: normal;
+}
+
+/* معلومات الإيصال */
+.receipt-info {
+    margin-bottom: 15px;
+}
+
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    padding-bottom: 5px;
+    border-bottom: 1px dotted #eee;
+}
+
+.label {
+    font-weight: bold;
+    color: #555;
+    font-size: 12px;
+}
+
+.value {
+    color: #333;
+    font-size: 12px;
+}
+
+/* قسم المبالغ */
+.amount-section {
+    background: #f9f9f9;
+    padding: 12px;
+    border-radius: 5px;
+    margin-bottom: 15px;
+    border: 1px solid #eee;
+}
+
+.amount-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    font-size: 12px;
+}
+
+.amount-row.total {
+    border-top: 1px solid #ddd;
+    padding-top: 8px;
+    margin-top: 8px;
+    font-weight: bold;
+    color: #2c5aa0;
+}
+
+/* الملاحظات */
+.notes-section {
+    background: #fff8e1;
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 15px;
+    border: 1px solid #ffeaa7;
+    font-size: 11px;
+}
+
+.notes-content {
+    color: #666;
+    margin-top: 5px;
+}
+
+/* التوقيعات */
+.signature-section {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 15px;
+    padding-top: 20px;
+    border-top: 1px dashed #ccc;
+}
+
+.signature-box {
+    text-align: center;
+    width: 45%;
+}
+
+.signature-line {
+    border-top: 1px solid #000;
+    margin-bottom: 5px;
+    height: 20px;
+}
+
+.signature-label {
+    font-size: 10px;
+    color: #666;
+}
+
+/* الفوتر */
+.footer {
+    text-align: center;
+    padding-top: 15px;
+    border-top: 1px dashed #ccc;
+    font-size: 10px;
+    color: #666;
+}
+
+.contact-info p {
+    margin: 3px 0;
+}
+
+.print-date {
+    margin-top: 10px;
+    color: #999;
+}
+
+/* طباعة */
 @media print {
-    .print-actions {
-        display: none;
-    }
-    body {
-        background-color: white;
-    }
     .receipt-container {
-        border: none;
+        padding: 0;
+        background: white;
+    }
+    
+    .receipt {
+        width: 80mm;
         box-shadow: none;
+        border: none;
+        padding: 10px;
+    }
+    
+    body {
+        margin: 0;
+        padding: 0;
+        background: white;
+    }
+    
+    @page {
+        size: 80mm auto;
+        margin: 0;
     }
 }
 </style>
