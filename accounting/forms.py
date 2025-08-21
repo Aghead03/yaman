@@ -12,6 +12,17 @@ class PaymentForm(forms.ModelForm):
             'notes': forms.Textarea(attrs={'rows': 3}),
         }
 
+    def __init__(self, *args, **kwargs):
+        # استخراج معلمة student من kwargs إذا وجدت
+        self.student = kwargs.pop('student', None)
+        super().__init__(*args, **kwargs)
+        
+        # إذا كان هناك طالب محدد، نعطيه قيمة ابتدائية
+        if self.student:
+            self.fields['student'].initial = self.student
+            # يمكنك أيضاً جعل حقل الطالب مخفياً أو غير قابل للتعديل
+            self.fields['student'].widget = forms.HiddenInput()
+
 class SettlementForm(forms.ModelForm):
     class Meta:
         model = Payment

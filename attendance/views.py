@@ -56,7 +56,6 @@ class TakeAttendanceView(View):
             return redirect('attendance:take_attendance')
         
         classroom = get_object_or_404(Classroom, id=classroom_id)
-        # جلب الطلاب عبر علاقة التسجيل في الشعبة
         students = Student.objects.filter(
             classroom_enrollments__classroom=classroom
         ).distinct()
@@ -75,7 +74,8 @@ class TakeAttendanceView(View):
         error_messages = []
         
         for student in students:
-            status = request.POST.get(f'status_{student.id}')
+            # قراءة القيمة مباشرة من الـ radio button
+            status = request.POST.get(f'status_{student.id}', 'present')  # الافتراضي حاضر
             notes = request.POST.get(f'notes_{student.id}', '')
             
             try:
@@ -153,13 +153,14 @@ class UpdateAttendanceView(View):
     
     def post(self, request, classroom_id, date):
         classroom = get_object_or_404(Classroom, id=classroom_id)
-        students = Student.objects.filter(classroom=classroom)
+        students = Student.objects.filter(classroom_enrollments__classroom=classroom)
         
         success_count = 0
         error_messages = []
         
         for student in students:
-            status = request.POST.get(f'status_{student.id}')
+            # قراءة القيمة مباشرة من الـ radio button
+            status = request.POST.get(f'status_{student.id}', 'present')  # الافتراضي حاضر
             notes = request.POST.get(f'notes_{student.id}', '')
             
             try:
@@ -181,4 +182,4 @@ class UpdateAttendanceView(View):
         if error_messages:
             messages.error(request, '<br>'.join(error_messages))
         
-        return redirect('attendance:attendance')    
+        return redirect('attendance:attendance')

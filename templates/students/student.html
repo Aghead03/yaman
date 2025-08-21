@@ -9,158 +9,28 @@
     </button>
 </div>
 {% include "partials/_alerts.html" %}
-
-
-<!-- نموذج إضافة طالب جديد (محدث) -->
-{% comment %} <div id="studentModal" class="modal">
-    <div class="modal-content">
-        <span class="close">&times;</span>
-        <h3 id="studentModalTitle">إضافة طالب جديد</h3>
-        <form method="POST" id="studentForm">
-            {% csrf_token %}        
-            <!-- المعلومات الأساسية -->
-            <h4 class="section-title">المعلومات الأساسية</h4>
-            <div class="form-row">
-                <div class="form-col">
-
-                    <label for="fullName" class="required-field">الاسم الكامل للطالب</label>
-                    <input type="text" id="fullName" name="full_name" required>
-                </div>
-                <div class="form-col">
-                    <label for="gender" class="required-field">الجنس</label>
-                    <select id="gender" name="gender" required>
-                        <option value="male">ذكر</option>
-                        <option value="female">أنثى</option>
-                    </select>
-                </div>
+<hr>
+<!-- شريط البحث -->
+<div class="search-bar" style="margin-bottom: 20px;">
+    <form method="GET" action="{% url 'students:student' %}">
+        <div class="input-group">
+            <input type="text" name="search" class="form-control" placeholder="ابحث عن طالب بالاسم أو الرقم أو الفرع..." value="{{ search_query }}">
+            <div class="input-group-append">
+                <button class="btn btn-primary" type="submit">
+                    <i class="fas fa-search"></i> بحث
+                </button>
+                {% if search_query %}
+                <a href="{% url 'students:student' %}" class="btn btn-secondary">
+                    <i class="fas fa-times"></i> إلغاء البحث
+                </a>
+                {% endif %}
             </div>
-            <div class="form-col">
-                        <label for="branch" class="required-field">الفرع</label>
-                        <select id="branch" name="branch" required>
-                            <option value="art">أدبي</option>
-                            <option value="sinc">علمي</option>
-                            <option value="asas">تاسع</option>
-                        </select>
-                    </div>
-            <div class="form-row">
-                <div class="form-col">
-                    <label for="birthDate" class="required-field">تاريخ الميلاد</label>
-                    <input type="date" id="birthDate" name="birth" required>
-                </div>
-                <div class="form-col">
-                    <label for="studentId" class="required-field">رقم الطالب</label>
-                    <input type="text" id="studentId" name="stu_phone" required>
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div class="form-col">
-                    <label for="nationality" class="required-field">الجنسية</label>
-                    <input type="text" id="nationality" name="nationality" required>
-                </div>
-                <div class="form-col">
-                    <label for="registrationDate" class="required-field">تاريخ التسجيل</label>
-                    <input type="date" id="registrationDate" name="date" required>
-                </div>
-            </div>
-
-            <!-- معلومات الأب -->
-            <h4 class="section-title">معلومات ولي الأمر (الأب)</h4>
-            <div class="form-row">
-                <div class="form-col">
-                    <label for="fatherName" class="required-field">اسم الأب</label>
-                    <input type="text" id="fatherName" name="fatherName" required>
-                </div>
-                <div class="form-col">
-                    <label for="fatherJob">عمل الأب</label>
-                    <input type="text" id="fatherJob" name="fatherJob" required>
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div class="form-col">
-                    <label for="fatherPhone" class="required-field">رقم هاتف الأب</label>
-                    <input type="tel" id="fatherPhone" name="fatherPhone" required>
-                </div>
-            </div>
-
-            <!-- معلومات الأم -->
-            <h4 class="section-title">معلومات ولي الأمر (الأم)</h4>
-            <div class="form-row">
-                <div class="form-col">
-                    <label for="motherName">اسم الأم</label>
-                    <input type="text" id="motherName" name="motherName" required>
-                </div>
-                <div class="form-col">
-                    <label for="motherJob">عمل الأم</label>
-                    <input type="text" id="motherJob" name="motherJob" required>
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div class="form-col">
-                    <label for="motherPhone">رقم هاتف الأم</label>
-                    <input type="tel" id="motherPhone" name="motherPhone">
-                </div>
-            </div>
-
-            <!-- معلومات السكن -->
-            <h4 class="section-title">معلومات السكن</h4>
-            <div class="form-row">
-                <div class="form-col">
-                    <label for="address" class="required-field">العنوان السكني</label>
-                    <textarea id="address" name="address" required></textarea>
-                </div>
-                <div class="form-col">
-                    <label for="landlinePhone">رقم الهاتف الأرضي</label>
-                    <input type="tel" id="landlinePhone" name="home_phone">
-                </div>
-            </div>
-
-            <!-- معلومات الدراسة -->
-            <h4 class="section-title">معلومات الدراسة السابقة</h4>
-            <div class="form-row">
-                <div class="form-col">
-                    <label for="previousSchool">المدرسة السابقة</label>
-                    <input type="text" id="previousSchool" name="last_school">
-                </div>
-                <div class="form-col">
-                    <label for="elementarySchool">مدرسة الابتدائية</label>
-                    <input type="text" id="elementarySchool" name="ele_school">
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div class="form-col">
-                    <label for="howKnewUs">كيف عرفت المعهد؟</label>
-                    <select id="howKnewUs" name="how_knew_us">
-                        <option value="">اختر طريقة التعرف</option>
-                        <option value="friend">صديق</option>
-                        <option value="social">مواقع التواصل</option>
-                        <option value="ad">إعلان</option>
-                        <option value="other">أخرى</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div class="form-col">
-                    <label for="notes">ملاحظات</label>
-                    <textarea id="notes" name="notes"></textarea>
-                </div>
-            </div>
-
-            <button type="submit" name="btn_save" class="btn btn-primary"> 
-                    <span> حفظ</span>
-            </button>
-            
-        </form>
-    </div>
-</div> {% endcomment %}
+        </div>
+    </form>
+</div>
 
     <div class="tabs">
         <div class="tab active" data-tab="students">الطلاب المسجلين</div>
-
     </div>
     <div class="tab-content active" id="teachers-tab">
         <div class="table-container">
@@ -171,8 +41,9 @@
             <th>id</th>
             <th>الاسم</th>
             <th>رقم الهاتف</th>
-            <th>الصف</th>
-            <th>الإجراءات</th> <!-- عمود جديد للإجراءات -->
+            <th>الفرع</th>
+            <th>تم الإضافة بواسطة</th>
+            <th>الإجراءات</th>
         </tr>
     </thead>
     <tbody>
@@ -182,14 +53,36 @@
             <td>{{ student.id }}</td>
             <td><a href="{% url 'students:student_profile' student.id %}">{{ student.full_name }}</a></td>
             <td>{{ student.student_number }}</td>
-            <td>{{ student.branch }}</td>
+            <td>{{ student.get_branch_display }}</td>
+            <td>
+                {% if student.added_by %}
+                    {{ student.added_by.get_full_name|default:student.added_by.username }}
+                {% else %}
+                    غير معروف
+                {% endif %}
+            </td>
             <td>
                 <a href="{% url 'students:student_profile' student.id %}" class="btn btn-sm btn-info">
                     <i class="fas fa-eye"></i>
                 </a>
+                {% if student.added_by == request.user or request.user.is_superuser %}
+                    <a href="{% url 'students:update_student' student.id %}" class="btn btn-sm btn-warning">
+                        <i class="fas fa-edit"></i>
+                    </a>
+                {% endif %}
                 <button class="btn btn-sm btn-danger delete-btn" data-id="{{ student.id }}">
                     <i class="fas fa-trash"></i>
                 </button>
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="7" class="text-center">
+                {% if search_query %}
+                لا توجد نتائج بحث لـ "{{ search_query }}"
+                {% else %}
+                لا يوجد طلاب مسجلين
+                {% endif %}
             </td>
         </tr>
         {% endfor %}
@@ -241,4 +134,3 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 {% endblock %}
-

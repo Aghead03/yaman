@@ -1,7 +1,5 @@
-
 from django.db import models
 from employ.models import Teacher
-# Create your models here.
 
 class Subject(models.Model):
     class SubjectType(models.TextChoices):
@@ -21,10 +19,23 @@ class Subject(models.Model):
         verbose_name='المدرسون',
         related_name='subjects_taught' 
     )
+    
     class Meta:
         verbose_name = 'مادة'
         verbose_name_plural = 'المواد'
+        ordering = ['name']  # الترتيب الأبجدي افتراضيًا
     
     def __str__(self):
         return self.name
     
+    def get_compatible_branches(self):
+        """إرجاع الفروع المتوافقة مع هذه المادة"""
+        if self.subject_type == 'scientific':
+            return ['علمي']
+        elif self.subject_type == 'literary':
+            return ['أدبي']
+        elif self.subject_type == 'ninth':
+            return ['تاسع']
+        elif self.subject_type == 'common':
+            return ['علمي', 'أدبي', 'تاسع']
+        return []

@@ -14,21 +14,29 @@
     </div>
 
     <div class="filters">
-        <div class="form-row">
-            <div class="form-col">
-                <select id="positionFilter" class="form-control">
-                    <option value="">جميع الوظائف</option>
-                    <option value="teacher">مدرس</option>
-                    <option value="admin">إداري</option>
-                    <option value="accountant">محاسب</option>
-                    <option value="manager">مدير</option>
-                    <option value="other">أخرى</option>
-                </select>
+        <form method="GET" action="{% url 'employ:hr' %}">
+            <div class="form-row">
+                <div class="form-col">
+                    <select name="position" id="positionFilter" class="form-control">
+                        <option value="">جميع الوظائف</option>
+                        <option value="admin" {% if request.GET.position == 'admin' %}selected{% endif %}>إداري</option>
+                        <option value="accountant" {% if request.GET.position == 'accountant' %}selected{% endif %}>محاسب</option>
+                        <option value="mentor" {% if request.GET.position == 'mentor' %}selected{% endif %}>موجه</option>
+                        <option value="manager" {% if request.GET.position == 'manager' %}selected{% endif %}>مدير</option>
+                        <option value="marketing" {% if request.GET.position == 'marketing' %}selected{% endif %}>تسويق</option>
+                        <option value="reception" {% if request.GET.position == 'reception' %}selected{% endif %}>استقبال</option>
+                    </select>
+                </div>
+                <div class="form-col">
+                    <input type="text" name="search" id="searchInput" class="form-control" 
+                           placeholder="بحث بالاسم..." value="{{ request.GET.search }}">
+                </div>
+                <div class="form-col">
+                    <button type="submit" class="btn btn-primary">بحث</button>
+                    <a href="{% url 'employ:hr' %}" class="btn btn-secondary">إعادة تعيين</a>
+                </div>
             </div>
-            <div class="form-col">
-                <input type="text" id="searchInput" class="form-control" placeholder="بحث بالاسم...">
-            </div>
-        </div>
+        </form>
     </div>
 
     <div class="tab-content active" id="employees-tab">
@@ -41,7 +49,7 @@
                         <th>الوظيفة</th>
                         <th>تاريخ التعيين</th>
                         <th>الراتب</th>
-                        {% comment %} <th>الإجراءات</th> {% endcomment %}
+                        <th>الإجراءات</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -52,17 +60,14 @@
                         <td>{{ employee.get_position_display }}</td>
                         <td>{{ employee.hire_date|date:"Y-m-d" }}</td>
                         <td>{{ employee.salary }}</td>
-                        {% comment %} <td>
-                            <button class="btn btn-sm btn-info edit-btn" data-id="{{ employee.id }}">
+                        <td>
+                            <a href="{% url 'employ:employee_update' employee.id %}" class="btn btn-sm btn-info">
                                 <i class="fas fa-edit"></i>
+                            </a>
+                            <button class="btn btn-sm btn-danger delete-btn" data-id="{{ employee.id }}" data-name="{{ employee.user.get_full_name }}">
+                                <i class="fas fa-trash"></i>
                             </button>
-                            <button class="btn btn-sm btn-danger terminate-btn" data-id="{{ employee.id }}">
-                                <i class="fas fa-user-times"></i>
-                            </button>
-                            <button class="btn btn-sm btn-success checkin-btn" data-id="{{ employee.id }}">
-                                <i class="fas fa-calendar-check"></i>
-                            </button>
-                        </td> {% endcomment %}
+                        </td>
                     </tr>
                     {% empty %}
                     <tr>
@@ -73,165 +78,188 @@
             </table>
         </div>
     </div>
-    <!-- نموذج إضافة/تعديل موظف -->
-    <!-- نموذج إنهاء خدمة موظف -->
-    <div id="terminateModal" class="modal">
+
+    <!-- نموذج تأكيد الحذف -->
+    <div id="deleteModal" class="modal">
         <div class="modal-content">
             <span class="close">&times;</span>
-            <h3>إنهاء خدمة موظف</h3>
-            <form id="terminateForm">
-                <div class="form-row">
-                    <div class="form-col">
-                        <label for="terminationDate">تاريخ إنهاء الخدمة</label>
-                        <input type="date" id="terminationDate" required>
-                    </div>
-                    <div class="form-col">
-                        <label for="terminationReason">سبب إنهاء الخدمة</label>
-                        <select id="terminationReason" required>
-                            <option value="">اختر السبب</option>
-                            <option value="resignation">استقالة</option>
-                            <option value="termination">إنهاء خدمة</option>
-                            <option value="retirement">تقاعد</option>
-                            <option value="other">أخرى</option>
-                        </select>
-                    </div>
+            <h3>تأكيد الحذف</h3>
+            <p id="delete-confirm-text">هل أنت متأكد من أنك تريد حذف هذا الموظف؟</p>
+            <form id="deleteForm" method="post" action="">
+                {% csrf_token %}
+                <input type="hidden" name="employee_id" id="deleteEmployeeId">
+                <div class="form-buttons">
+                    <button type="submit" class="btn btn-danger">نعم، احذف</button>
+                    <button type="button" class="btn btn-secondary close-delete-modal">إلغاء</button>
                 </div>
-
-                <div class="form-row">
-                    <div class="form-col">
-                        <label for="terminationNotes">ملاحظات</label>
-                        <textarea id="terminationNotes" rows="3"></textarea>
-                    </div>
-                </div>
-
-                <button type="submit" class="btn btn-danger">تأكيد إنهاء الخدمة</button>
             </form>
         </div>
     </div>
 
-    <!-- نموذج تسجيل الحضور -->
-    <div id="checkinModal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <h3>تسجيل حضور الموظف</h3>
-            <form id="checkinForm">
-                <div class="form-row">
-                    <div class="form-col">
-                        <label for="checkinEmployee">الموظف</label>
-                        <select id="checkinEmployee" required>
-                            <option value="">اختر الموظف</option>
-                            <!-- سيتم ملؤها بواسطة JavaScript -->
-                        </select>
-                    </div>
-                    <div class="form-col">
-                        <label for="checkinDate">التاريخ</label>
-                        <input type="date" id="checkinDate" required>
-                    </div>
-                </div>
+    <style>
+        .filters {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 5px;
+        }
+        
+        .form-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: end;
+        }
+        
+        .form-col {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .table-container {
+            overflow-x: auto;
+        }
+        
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .table th, .table td {
+            padding: 12px;
+            text-align: right;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .table th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        
+        .btn {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+        
+        .btn-sm {
+            padding: 5px 8px;
+            font-size: 12px;
+        }
+        
+        .btn-info {
+            background: #17a2b8;
+            color: white;
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .text-center {
+            text-align: center;
+        }
+        
+        /* أنماط النافذة المنبثقة */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        
+        .modal-content {
+            background-color: #fefefe;
+            margin: 10% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 50%;
+            border-radius: 5px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .close {
+            color: #aaa;
+            float: left;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .form-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: left;
+            margin-top: 20px;
+        }
+    </style>
 
-                <div class="form-row">
-                    <div class="form-col">
-                        <label for="checkinTime">وقت الدخول</label>
-                        <input type="time" id="checkinTime" required>
-                    </div>
-                    <div class="form-col">
-                        <label for="checkoutTime">وقت الخروج</label>
-                        <input type="time" id="checkoutTime">
-                    </div>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-col">
-                        <label for="checkinStatus">حالة الحضور</label>
-                        <select id="checkinStatus" required>
-                            <option value="present">حاضر</option>
-                            <option value="absent">غائب</option>
-                            <option value="late">متأخر</option>
-                            <option value="vacation">إجازة</option>
-                        </select>
-                    </div>
-                    <div class="form-col">
-                        <label for="checkinNotes">ملاحظات</label>
-                        <input type="text" id="checkinNotes">
-                    </div>
-                </div>
-
-                <button type="submit" class="btn btn-primary">حفظ</button>
-            </form>
-        </div>
-    </div>
     <script>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // البحث والتصفية
-    const positionFilter = document.getElementById('positionFilter');
-    const searchInput = document.getElementById('searchInput');
-    
-    function applyFilters() {
-        const position = positionFilter.value;
-        const search = searchInput.value.trim();
+    document.addEventListener('DOMContentLoaded', function() {
+        // النافذة المنبثقة للحذف
+        const deleteModal = document.getElementById('deleteModal');
+        const deleteBtns = document.querySelectorAll('.delete-btn');
+        const closeBtn = document.querySelector('.close');
+        const closeDeleteModalBtn = document.querySelector('.close-delete-modal');
+        const deleteForm = document.getElementById('deleteForm');
+        const deleteConfirmText = document.getElementById('delete-confirm-text');
+        const deleteEmployeeId = document.getElementById('deleteEmployeeId');
         
-        let url = window.location.pathname;
-        let params = new URLSearchParams();
-        
-        if (position) params.append('position', position);
-        if (search) params.append('search', search);
-        
-        window.location.href = url + '?' + params.toString();
-    }
-    
-    positionFilter.addEventListener('change', applyFilters);
-    searchInput.addEventListener('keyup', function(e) {
-        if (e.key === 'Enter') applyFilters();
-    });
-
-    // باقي الكود الخاص بالنوافذ المنبثقة...
-    const terminateModal = document.getElementById('terminateModal');
-    const checkinModal = document.getElementById('checkinModal');
-    const closeButtons = document.querySelectorAll('.close');
-
-    // فتح نافذة إنهاء خدمة موظف
-    function openTerminateModal(employeeId) {
-        terminateModal.style.display = 'block';
-        // يمكنك هنا جلب بيانات الموظف عبر AJAX إذا لزم الأمر
-    }
-
-    // فتح نافذة تسجيل الحضور
-    function openCheckinModal(employeeId) {
-        checkinModal.style.display = 'block';
-        // يمكنك هنا جلب بيانات الموظف عبر AJAX إذا لزم الأمر
-    }
-
-    // إغلاق النوافذ المنبثقة
-    closeButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            terminateModal.style.display = 'none';
-            checkinModal.style.display = 'none';
+        // فتح نافذة تأكيد الحذف
+        deleteBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const employeeId = this.dataset.id;
+                const employeeName = this.dataset.name;
+                
+                deleteConfirmText.textContent = `هل أنت متأكد من أنك تريد حذف الموظف "${employeeName}"؟`;
+                deleteEmployeeId.value = employeeId;
+                deleteForm.action = "{% url 'employ:employee_delete' 0 %}".replace('0', employeeId);
+                
+                deleteModal.style.display = 'block';
+            });
         });
+        
+        // إغلاق النافذة المنبثقة
+        function closeDeleteModal() {
+            deleteModal.style.display = 'none';
+        }
+        
+        if (closeBtn) closeBtn.addEventListener('click', closeDeleteModal);
+        if (closeDeleteModalBtn) closeDeleteModalBtn.addEventListener('click', closeDeleteModal);
+        
+        // إغلاق النافذة عند النقر خارجها
+        window.addEventListener('click', function(event) {
+            if (event.target === deleteModal) {
+                closeDeleteModal();
+            }
+        });
+        
+        // إرسال نموذج الحذف
+        if (deleteForm) {
+            deleteForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                this.submit();
+            });
+        }
     });
-
-    // إغلاق النوافذ عند النقر خارجها
-    window.addEventListener('click', function(event) {
-        if (event.target === terminateModal) {
-            terminateModal.style.display = 'none';
-        }
-        if (event.target === checkinModal) {
-            checkinModal.style.display = 'none';
-        }
-    });
-
-    // ربط أحداث الأزرار في الجدول
-    document.addEventListener('click', function(e) {
-        if (e.target.closest('.terminate-btn')) {
-            const employeeId = e.target.closest('.terminate-btn').dataset.id;
-            openTerminateModal(employeeId);
-        }
-        else if (e.target.closest('.checkin-btn')) {
-            const employeeId = e.target.closest('.checkin-btn').dataset.id;
-            openCheckinModal(employeeId);
-        }
-    });
-});
-</script>
     </script>
 {% endblock %}

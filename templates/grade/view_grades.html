@@ -2,7 +2,7 @@
 {% load grade_filters %}
 {% block content %}
     <div class="module-header">
-        <h2>إدارة العلامات - {{ classroom.name }} / {{ subject.name }}</h2>
+        <h2>إدارة العلامات - {{ classroom.name }} / {{ subject_display_name }}</h2>
         <div class="float-right">
             <a href="{% url 'grade:edit_grades' classroom.id subject.id %}" class="btn btn-primary">
                 تعديل العلامات

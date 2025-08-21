@@ -11,9 +11,12 @@ def grades_dashboard(request):
     return render(request, 'grade/dashboard.html', {'classrooms': classrooms})
 
 def view_grades(request, classroom_id, subject_id):
-    # صفحة عرض العلامات (للقراءة فقط)
     classroom = get_object_or_404(Classroom, pk=classroom_id)
     subject = get_object_or_404(Subject, pk=subject_id)
+    
+    # الحصول على أسماء المعلمين للمادة
+    teacher_names = ", ".join([teacher.full_name for teacher in subject.teachers.all()])
+    subject_display_name = f"{subject.name} ({teacher_names})" if teacher_names else subject.name
     
     grades = Grade.objects.filter(
         classroom=classroom,
@@ -23,12 +26,17 @@ def view_grades(request, classroom_id, subject_id):
     return render(request, 'grade/view_grades.html', {
         'classroom': classroom,
         'subject': subject,
+        'subject_display_name': subject_display_name,
         'grades': grades
     })
 
 def edit_grades(request, classroom_id, subject_id):
     classroom = get_object_or_404(Classroom, pk=classroom_id)
     subject = get_object_or_404(Subject, pk=subject_id)
+    
+    # الحصول على أسماء المعلمين للمادة
+    teacher_names = ", ".join([teacher.full_name for teacher in subject.teachers.all()])
+    subject_display_name = f"{subject.name} ({teacher_names})" if teacher_names else subject.name
     
     GradeFormSet = modelformset_factory(Grade, form=GradeForm, extra=0)
     students = classroom.students.all().order_by('full_name')
@@ -74,15 +82,30 @@ def edit_grades(request, classroom_id, subject_id):
     return render(request, 'grade/edit_grades.html', {
         'classroom': classroom,
         'subject': subject,
+        'subject_display_name': subject_display_name,
         'formset': formset,
         'students': students
     })
+    
     
 def select_subject(request, classroom_id):
     classroom = get_object_or_404(Classroom, pk=classroom_id)
     subjects = classroom.classroomsubject_set.all()  
     
+    # إضافة أسماء المعلمين للمواد
+    subjects_with_teachers = []
+    for subject in subjects:
+        teacher_names = ", ".join([teacher.full_name for teacher in subject.subject.teachers.all()])
+        if teacher_names:
+            display_name = f"{subject.subject.name} ({teacher_names})"
+        else:
+            display_name = subject.subject.name
+        subjects_with_teachers.append({
+            'subject': subject,
+            'display_name': display_name
+        })
+    
     return render(request, 'grade/select_subject.html', {
         'classroom': classroom,
-        'subjects': subjects
-    })  
+        'subjects_with_teachers': subjects_with_teachers
+    })

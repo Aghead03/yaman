@@ -5,7 +5,7 @@ from django.contrib import messages
 from .models import Classroom ,Classroomenrollment ,ClassroomSubject
 from .form import ClassroomForm ,ClassroomSubjectForm
 from students.models import Student
-
+from courses.models import Subject
 from django.db import IntegrityError
 from django.core.exceptions import ValidationError
 
@@ -142,7 +142,9 @@ class ClassroomSubjectListView(ListView):
     template_name = 'classroom/classroom_subject_list.html'
 
     def get_queryset(self):
-        return ClassroomSubject.objects.filter(classroom_id=self.kwargs['classroom_id'])
+        return ClassroomSubject.objects.filter(
+            classroom_id=self.kwargs['classroom_id']
+        ).select_related('subject').prefetch_related('subject__teachers')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -154,14 +156,53 @@ class ClassroomSubjectCreateView(CreateView):
     form_class = ClassroomSubjectForm
     template_name = 'classroom/classroom_subject_form.html'
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        classroom = get_object_or_404(Classroom, id=self.kwargs['classroom_id'])
+        kwargs['classroom'] = classroom
+        return kwargs
+
     def get_initial(self):
         initial = super().get_initial()
         initial['classroom'] = get_object_or_404(Classroom, id=self.kwargs['classroom_id'])
         return initial
 
+    # في ClassroomSubjectCreateView، قم بتعديل طريقة get_context_data
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['classroom'] = get_object_or_404(Classroom, id=self.kwargs['classroom_id'])
+        classroom = get_object_or_404(Classroom, id=self.kwargs['classroom_id'])
+        context['classroom'] = classroom
+        
+        # تحميل المواد مع معلميها مسبقاً لتحسين الأداء
+        if classroom.class_type == 'study':
+            if classroom.branches == 'علمي':
+                subjects = Subject.objects.filter(
+                    subject_type__in=['scientific', 'common']
+                ).prefetch_related('teachers')
+            elif classroom.branches == 'أدبي':
+                subjects = Subject.objects.filter(
+                    subject_type__in=['literary', 'common']
+                ).prefetch_related('teachers')
+            elif classroom.branches == 'تاسع':
+                subjects = Subject.objects.filter(
+                    subject_type__in=['ninth', 'common']
+                ).prefetch_related('teachers')
+            else:
+                subjects = Subject.objects.none()
+        else:
+            subjects = Subject.objects.all().prefetch_related('teachers')
+        
+        # إنشاء قائمة بالمواد مع أسماء المعلمين
+        subject_choices = []
+        for subject in subjects:
+            teacher_names = ", ".join([teacher.full_name for teacher in subject.teachers.all()])
+            if teacher_names:
+                display_name = f"{subject.name} ({teacher_names})"
+            else:
+                display_name = subject.name
+            subject_choices.append((subject.id, display_name))
+        
+        context['subject_choices'] = subject_choices
         return context
 
     def form_valid(self, form):
@@ -170,7 +211,6 @@ class ClassroomSubjectCreateView(CreateView):
 
     def get_success_url(self):
         return reverse('classroom:classroom_subject_list', kwargs={'classroom_id': self.kwargs['classroom_id']})
-
 
 
 class AssignToCourseView(View):

@@ -24,9 +24,6 @@ class TeacherForm(forms.ModelForm):
         labels = {
             'full_name': 'الاسم الكامل',
             'phone_number': 'رقم الهاتف',
-            'id_number': 'رقم الهوية',
-            'subject': 'المادة',
-            'contract_type': 'نوع العقد',
             'hire_date': 'تاريخ التعيين',
             'notes': 'ملاحظات',
         }

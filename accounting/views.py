@@ -107,22 +107,21 @@ class AccountingHomeView(LoginRequiredMixin, generic.TemplateView):
             income_data.append(income)
             expense_data.append(expense)
         
+        # التصحيح: حساب أرصدة الطلاب بشكل صحيح
+        students = Student.objects.prefetch_related('payments').all().order_by('full_name')
+        
+        for student in students:
+            student.total_required = sum(p.required_amount for p in student.payments.all())
+            student.total_paid = sum(p.amount for p in student.payments.all())
+            student.balance = student.total_required - student.total_paid
+            student.is_paid_in_full = student.balance <= 0
+        
         # تصفية الطلاب حسب حالة الدفع
         payment_status = self.request.GET.get('payment_status')
-        students = Student.objects.annotate(
-            total_required=Sum('payments__required_amount', default=0),
-            total_paid=Sum('payments__amount', default=0),
-            is_paid_in_full=Case(
-                When(total_paid__gte=F('total_required'), then=Value(True)),
-                default=Value(False),
-                output_field=BooleanField()
-            )
-        ).order_by('full_name')
-        
         if payment_status == 'paid':
-            students = students.filter(is_paid_in_full=True)
+            students = [s for s in students if s.is_paid_in_full]
         elif payment_status == 'unpaid':
-            students = students.filter(is_paid_in_full=False)
+            students = [s for s in students if not s.is_paid_in_full]
         
         context.update({
             'active_tab': active_tab,
@@ -166,11 +165,31 @@ class PaymentCreateView(LoginRequiredMixin, generic.CreateView):
     template_name = 'accounting/payment_form.html'
     success_url = reverse_lazy('accounting:accounting')
 
+    def get_initial(self):
+        initial = super().get_initial()
+        student_id = self.request.GET.get('student')
+        if student_id:
+            try:
+                student = Student.objects.get(id=student_id)
+                initial['student'] = student
+            except Student.DoesNotExist:
+                pass
+        return initial
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        student_id = self.request.GET.get('student')
+        if student_id:
+            try:
+                kwargs['student'] = Student.objects.get(id=student_id)
+            except Student.DoesNotExist:
+                pass
+        return kwargs
+
     def form_valid(self, form):
         form.instance.created_by = self.request.user
         response = super().form_valid(form)
         
-        # لا داعي لإنشاء المعاملة هنا لأنها تتم تلقائياً في save() method للنموذج
         return response
 
 
@@ -261,8 +280,12 @@ class StudentAccountView(LoginRequiredMixin, generic.DetailView):
         student = self.object
         payments = student.payments.all().order_by('-date')
         
-        total_required = payments.aggregate(Sum('required_amount'))['required_amount__sum'] or 0
-        total_paid = payments.aggregate(Sum('amount'))['amount__sum'] or 0
+        # التصحيح: حساب إجمالي المطلوب من جميع الدفعات
+        total_required = sum(payment.required_amount for payment in payments)
+        
+        # التصحيح: حساب إجمالي المدفوع من جميع الدفعات
+        total_paid = sum(payment.amount for payment in payments)
+        
         balance = total_required - total_paid
         
         context.update({
@@ -328,3 +351,6 @@ class SettlementCreateView(LoginRequiredMixin, generic.CreateView):
                 form.add_error('amount', 'المبلغ المدخل يجب أن يساوي الرصيد المتبقي')
                 return self.form_invalid(form)
         return super().form_invalid(form)
+    
+    
+    

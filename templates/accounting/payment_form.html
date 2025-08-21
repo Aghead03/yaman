@@ -3,87 +3,62 @@
 
 {% block content %}
 <div class="header">
-    <h2>{% if object %}تعديل{% else %}إضافة{% endif %} دفعة طالب</h2>
+    <h2>{% if form.instance.pk %}تعديل{% else %}إضافة{% endif %} دفعة</h2>
 </div>
 
-<div class="form-container">
-    <form method="post">
-        {% csrf_token %}
-        <div class="form-row">
-            <div class="form-col">
-                <label for="{{ form.student.id_for_label }}">الطالب:</label>
-                {{ form.student }}
-                {{ form.student.errors }}
-            </div>
-            <div class="form-col">
-                <label for="{{ form.payment_type.id_for_label }}">نوع الدفعة:</label>
-                {{ form.payment_type }}
-                {{ form.payment_type.errors }}
-            </div>
-        </div>
-        
-        <div class="form-row">
-            <div class="form-col">
-                <label for="{{ form.required_amount.id_for_label }}">المبلغ المطلوب:</label>
-                {{ form.required_amount }}
-                {{ form.required_amount.errors }}
-            </div>
-            <div class="form-col">
-                <label for="{{ form.amount.id_for_label }}">المبلغ المدفوع:</label>
-                {{ form.amount }}
-                {{ form.amount.errors }}
-            </div>
-        </div>
-        
-        <div class="form-row">
-            <div class="form-col">
-                <label for="{{ form.date.id_for_label }}">تاريخ الدفع:</label>
-                {{ form.date }}
-                {{ form.date.errors }}
-            </div>
-            <div class="form-col">
-                <label for="{{ form.payment_method.id_for_label }}">طريقة الدفع:</label>
-                {{ form.payment_method }}
-                {{ form.payment_method.errors }}
-            </div>
-        </div>
-        
-        <div class="form-row">
-            <div class="form-col">
-                <label for="{{ form.notes.id_for_label }}">ملاحظات:</label>
-                {{ form.notes }}
-                {{ form.notes.errors }}
-            </div>
-        </div>
-        
-        <div class="form-actions">
-            <button type="submit" class="btn btn-primary">حفظ</button>
-            <a href="{% url 'accounting:accounting' %}" class="btn btn-secondary">إلغاء</a>
-        </div>
-    </form>
-</div>
-{% block scripts %}
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const paymentTypeSelect = document.getElementById('id_payment_type');
-    const requiredAmountInput = document.getElementById('id_required_amount');
+<form method="post" class="form">
+    {% csrf_token %}
     
-    if (paymentTypeSelect && requiredAmountInput) {
-        paymentTypeSelect.addEventListener('change', function() {
-            if (this.value === 'settlement') {
-                requiredAmountInput.readOnly = true;
-                // يمكنك إضافة كود لحساب الرصيد المتبقي هنا إذا لزم الأمر
-            } else {
-                requiredAmountInput.readOnly = false;
-            }
-        });
-        
-        // تطبيق الحالة الأولية عند تحميل الصفحة
-        if (paymentTypeSelect.value === 'settlement') {
-            requiredAmountInput.readOnly = true;
-        }
-    }
-});
-</script>
-{% endblock %}
+    <div class="form-group">
+        <label for="id_student">الطالب:</label>
+        {% if student %}
+            <input type="text" value="{{ student.full_name }}" class="form-control" disabled>
+            <input type="hidden" name="student" value="{{ student.id }}">
+        {% else %}
+            {{ form.student }}
+        {% endif %}
+        {{ form.student.errors }}
+    </div>
+    
+    <div class="form-group">
+        <label for="id_payment_type">نوع الدفعة:</label>
+        {{ form.payment_type }}
+        {{ form.payment_type.errors }}
+    </div>
+    
+    <div class="form-group">
+        <label for="id_required_amount">المبلغ المطلوب:</label>
+        {{ form.required_amount }}
+        {{ form.required_amount.errors }}
+    </div>
+    
+    <div class="form-group">
+        <label for="id_amount">المبلغ المدفوع:</label>
+        {{ form.amount }}
+        {{ form.amount.errors }}
+    </div>
+    
+    <div class="form-group">
+        <label for="id_date">التاريخ:</label>
+        {{ form.date }}
+        {{ form.date.errors }}
+    </div>
+    
+    <div class="form-group">
+        <label for="id_payment_method">طريقة الدفع:</label>
+        {{ form.payment_method }}
+        {{ form.payment_method.errors }}
+    </div>
+    
+    <div class="form-group">
+        <label for="id_notes">ملاحظات:</label>
+        {{ form.notes }}
+        {{ form.notes.errors }}
+    </div>
+    
+    <div class="form-actions">
+        <button type="submit" class="btn btn-primary">حفظ</button>
+        <a href="{% url 'accounting:accounting' %}" class="btn btn-secondary">إلغاء</a>
+    </div>
+</form>
 {% endblock %}

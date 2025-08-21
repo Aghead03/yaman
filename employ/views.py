@@ -130,3 +130,16 @@ class EmployeeUpdateView(UserPassesTestMixin, UpdateView):
         # استخدم AdminPasswordChangeForm بدلاً من PasswordChangeForm
         context['password_form'] = AdminPasswordChangeForm(user=self.object.user)
         return context
+    
+# views.py
+class EmployeeDeleteView(UserPassesTestMixin, DeleteView):
+    model = Employee
+    success_url = reverse_lazy('employ:hr')
+    template_name = 'employ/employee_confirm_delete.html'
+
+    def test_func(self):
+        return self.request.user.is_superuser
+
+    def delete(self, request, *args, **kwargs):
+        messages.success(self.request, 'تم حذف الموظف بنجاح')
+        return super().delete(request, *args, **kwargs)    

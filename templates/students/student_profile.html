@@ -161,6 +161,59 @@
                             </p>
                         </div>
                     </div>
+                    <div class="tab-content" id="academic-tab">
+                        <!-- قسم العلامات والحضور الجديد -->
+                        <div class="info-section">
+                            <h4 class="section-title"><i class="fas fa-chart-line"></i> العلامات والشعب</h4>
+                            
+                            {% for enrollment in student.classroom_enrollments.all %}
+                            <div class="classroom-card">
+                                <h5>{{ enrollment.classroom.name }}</h5>
+                                <p class="class-type">{{ enrollment.classroom.get_class_type_display }}</p>
+                                
+                                <div class="grades-attendance">
+                                    <!-- العلامات -->
+                                    <div class="grades-section">
+                                        <h6>العلامات:</h6>
+                                        {% for grade in enrollment.classroom.grade_set.all %}
+                                            {% if grade.student.id == student.id %}
+                                            <div class="grade-item">
+                                                <span class="subject">{{ grade.subject.name }}:</span>
+                                                <span class="score">{{ grade.grade }}</span>
+                                                <span class="exam-type">({{ grade.get_exam_type_display }})</span>
+                                            </div>
+                                            {% endif %}
+                                        {% empty %}
+                                            <p class="no-data">لا توجد علامات مسجلة</p>
+                                        {% endfor %}
+                                    </div>
+                                    
+                                    <!-- نسبة الحضور -->
+                                    <div class="attendance-section">
+                                        <h6>نسبة الحضور:</h6>
+                                        {% with total=enrollment.total_attendance present=enrollment.present_attendance %} 
+                                            {% if total > 0 %}
+                                                <div class="attendance-progress">
+                                                    <div class="progress-bar">
+                                                        <div class="progress-fill" style="width: {{ enrollment.attendance_percentage }}%"></div>
+                                                    </div>
+                                                    <span class="attendance-percentage">{{ enrollment.attendance_percentage|floatformat:0 }}%</span>
+                                                </div>
+                                                <p class="attendance-details">({{ present }} حاضر من {{ total }} حصة)</p>
+                                            {% else %}
+                                                <p class="no-data">لا توجد بيانات حضور</p>
+                                            {% endif %}
+                                        {% endwith %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% empty %}
+                            <p class="no-data">الطالب غير مسجل في أي شعبة حالياً</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
                     <div class="form-row">
                         <div class="form-col full-width">
                             <label><i class="fas fa-sticky-note"></i> ملاحظات</label>
@@ -374,6 +427,109 @@
             background: #ffc107;
             color: #212529;
         }
+         /* تنسيقات قسم العلامات والحضور */
+        .classroom-card {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .classroom-card h5 {
+            margin: 0 0 5px;
+            color: #2c3e50;
+        }
+        
+        .class-type {
+            color: #7f8c8d;
+            margin: 0 0 15px;
+            font-size: 14px;
+        }
+        
+        .grades-attendance {
+            display: flex;
+            gap: 20px;
+        }
+        
+        .grades-section, .attendance-section {
+            flex: 1;
+        }
+        
+        .grades-section h6, .attendance-section h6 {
+            margin: 0 0 10px;
+            color: #34495e;
+        }
+        
+        .grade-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            padding: 5px;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+        
+        .subject {
+            font-weight: bold;
+        }
+        
+        .score {
+            color: #27ae60;
+            font-weight: bold;
+        }
+        
+        .exam-type {
+            font-size: 12px;
+            color: #7f8c8d;
+        }
+        
+        .attendance-progress {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 5px;
+        }
+        
+        .progress-bar {
+            flex: 1;
+            height: 10px;
+            background: #ecf0f1;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: #3498db;
+            border-radius: 5px;
+            transition: width 0.3s ease;
+        }
+        
+        .attendance-percentage {
+            font-weight: bold;
+            color: #2c3e50;
+            min-width: 40px;
+        }
+        
+        .attendance-details {
+            margin: 0;
+            font-size: 12px;
+            color: #7f8c8d;
+        }
+        
+        .no-data {
+            color: #95a5a6;
+            font-style: italic;
+        }
+        
+        @media (max-width: 768px) {
+            .grades-attendance {
+                flex-direction: column;
+                gap: 15px;
+            }
+        }
+
     </style>
 
     <script>

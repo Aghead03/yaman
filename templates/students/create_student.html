@@ -8,6 +8,7 @@
             <div class="card shadow">
                 <div class="card-header bg-primary text-white">
                     <h3 class="mb-0 text-center">تسجيل طالب جديد</h3>
+                    <p class="text-center mb-0">جميع الحقول مطلوبة ما لم يذكر غير ذلك</p>
                 </div>
                 <div class="card-body">
                     <form method="POST" enctype="multipart/form-data">
@@ -55,4 +56,11 @@
         </div>
     </div>
 </div>
+
+<style>
+/* إضافة علامة النجمة للحقول المطلوبة */
+.text-danger {
+    color: red;
+}
+</style>
 {% endblock %}
