@@ -8,6 +8,11 @@ from students.models import Student
 from courses.models import Subject
 from django.db import IntegrityError
 from django.core.exceptions import ValidationError
+import pandas as pd
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404
+import openpyxl
+from openpyxl.styles import Font, Alignment
 
 
 
@@ -247,11 +252,7 @@ class AssignToCourseView(View):
     
     
     
-import pandas as pd
-from django.http import HttpResponse
-from django.shortcuts import get_object_or_404
-import openpyxl
-from openpyxl.styles import Font, Alignment
+
 
 def export_classroom_students_to_excel(request, classroom_id):
     # جلب بيانات الشعبة

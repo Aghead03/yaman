@@ -9,6 +9,8 @@ from classroom.models import Classroom
 from courses.models import Subject
 from students.models import Student
 from .form import GradeForm , CustomPrintForm
+import openpyxl
+from openpyxl.styles import Font, Alignment 
 
 def grades_dashboard(request):
     classrooms = Classroom.objects.all()
@@ -294,8 +296,6 @@ def custom_print_grades(request, classroom_id, subject_id):
         'form': form
     }) 
     
-import openpyxl
-from openpyxl.styles import Font, Alignment    
     
 def export_grades_excel(request, classroom_id, subject_id):
     classroom = get_object_or_404(Classroom, pk=classroom_id)

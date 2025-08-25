@@ -8,6 +8,9 @@ from employ.models import Teacher
 from django.contrib import messages
 from django.http import JsonResponse
 from django.db import IntegrityError
+import pandas as pd
+from django.http import HttpResponse
+from django.utils import timezone
 # Create your views here.
 
 class attendance(ListView):
