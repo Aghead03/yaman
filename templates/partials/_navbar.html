@@ -18,7 +18,7 @@
 
         {% if user.employee.position in 'manager,admin,reception' or user.is_superuser  %}
         <a href="{% url "students:student" %}" class="menu-item" data-module="students">
-            <i class="fas fa-users"></i>
+            <i class="fas fa-user-graduate"></i>
             <span>الطلاب</span>
         </a>
         {% endif %}
@@ -32,30 +32,30 @@
 
         {% if user.employee.position in 'manager,accountant,reception' or user.is_superuser  %}
         <a href="{% url "accounting:accounting" %}" class="menu-item" data-module="accounting">
-            <i class="fas fa-calculator"></i>
+            <i class="fas fa-file-invoice-dollar"></i>
             <span>المحاسبة</span>
         </a>
         {% endif %}
 
         {% if user.employee.position in 'manager,mentor' or user.is_superuser  %}
         <a href="{% url "attendance:attendance" %}" class="menu-item" data-module="attendance">
-            <i class="fas fa-clipboard-check"></i>
+            <i class="fas fa-calendar-check"></i>
             <span>الحضور</span>
         </a>
         <a href="{% url "students:stu_num" %}" class="menu-item" data-module="attendance">
-            <i class="fas fa-clipboard-check"></i>
+            <i class="fas fa-users"></i>
             <span>عدد الطلاب</span>
         </a>
         <a class="menu-item"  href="{% url 'attendance:teacher_attendance' %}">
-                <i class="fas fa-chalkboard-teacher"></i> حضور المدرسين
+            <i class="fas fa-user-check"></i> حضور المدرسين
         </a>
 
         <a href="{% url "classroom:classroom" %}" class="menu-item" data-module="attendance">
-            <i class="fas fa-clipboard-check"></i>
+            <i class="fas fa-chalkboard"></i>
             <span>الشعب</span>
         </a>
         <a href="{% url "grade:dashboard" %}" class="menu-item" data-module="grades">
-            <i class="fas fa-award"></i>
+            <i class="fas fa-chart-line"></i>
             <span>العلامات</span>
         </a>
         {% endif %}
@@ -65,26 +65,26 @@
             <span>الموظفين</span>
         </a>
         <a href="{% url "employ:vacation_list" %}" class="menu-item" data-module="hr">
-            <i class="fas fa-user-tie"></i>
+            <i class="fas fa-umbrella-beach"></i>
             <span>الاجازات</span>
         </a>
         {% endif %}
         {% if user.employee.position in 'manager,admin' or user.is_superuser  %}
         <a href="{% url "courses:subject_list" %}" class="menu-item" data-module="hr">
-            <i class="fas fa-user-tie"></i>
+            <i class="fas fa-book"></i>
             <span>المواد</span>
         </a>
         {% endif %}
         {% comment %} <a href="{% url "students:student_profile" %}" class="menu-item" data-module="hr">
-            <i class="fas fa-user-tie"></i>
+            <i class="fas fa-file-alt"></i>
             <span>ملفات الطلاب</span>
         </a> {% endcomment %}
         {% comment %} <a href="{% url "courses:courses" %}" class="menu-item" data-module="hr">
-            <i class="fas fa-user-tie"></i>
+            <i class="fas fa-graduation-cap"></i>
             <span>الدورات والبرامج</span>
         </a> {% endcomment %}
         {% comment %} <a href="{% url "students:student_groups" %}" class="menu-item" data-module="hr">
-            <i class="fas fa-user-tie"></i>
+            <i class="fas fa-users-cog"></i>
             <span>المجموعة الطلابية</span>
         </a> {% endcomment %}
         {% comment %} <a href="{% url "accounting:reports" %}" class="menu-item" data-module="reports">
@@ -122,8 +122,8 @@
     </div>
     <div>
         <a href="{% url "login" %}" class="menu-item" id="logoutBtn">
-            <i class="fas fa-sign-out-alt"></i>
+            <i class="fas fa-sign-in-alt"></i>
             <span>تسجيل الدخول</span>
         </a>
     </div>
-{% endif %}    
+{% endif %}
