@@ -53,8 +53,13 @@ class IncomeForm(forms.ModelForm):
 class ExpenseForm(forms.ModelForm):
     class Meta:
         model = Transaction
-        fields = ['amount', 'date', 'description']
+        fields = ['expense_type', 'amount', 'date', 'description']
         widgets = {
             'date': forms.DateInput(attrs={'type': 'date'}),
             'description': forms.Textarea(attrs={'rows': 3}),
         }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # جعل حقل نوع المصروف مطلوباً فقط للمصروفات
+        self.fields['expense_type'].required = True

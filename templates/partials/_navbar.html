@@ -42,6 +42,14 @@
             <i class="fas fa-clipboard-check"></i>
             <span>الحضور</span>
         </a>
+        <a href="{% url "students:stu_num" %}" class="menu-item" data-module="attendance">
+            <i class="fas fa-clipboard-check"></i>
+            <span>عدد الطلاب</span>
+        </a>
+        <a class="menu-item"  href="{% url 'attendance:teacher_attendance' %}">
+                <i class="fas fa-chalkboard-teacher"></i> حضور المدرسين
+        </a>
+
         <a href="{% url "classroom:classroom" %}" class="menu-item" data-module="attendance">
             <i class="fas fa-clipboard-check"></i>
             <span>الشعب</span>
@@ -55,6 +63,10 @@
         <a href="{% url "employ:hr" %}" class="menu-item" data-module="hr">
             <i class="fas fa-user-tie"></i>
             <span>الموظفين</span>
+        </a>
+        <a href="{% url "employ:vacation_list" %}" class="menu-item" data-module="hr">
+            <i class="fas fa-user-tie"></i>
+            <span>الاجازات</span>
         </a>
         {% endif %}
         {% if user.employee.position in 'manager,admin' or user.is_superuser  %}

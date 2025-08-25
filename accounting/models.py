@@ -67,17 +67,34 @@ class Transaction(models.Model):
         INCOME = 'income', 'وارد'
         EXPENSE = 'expense', 'منصرف'
 
+    class ExpenseCategory(models.TextChoices):
+        EMPLOYEE_SALARY = 'employee_salary', 'راتب موظف'
+        TEACHER_SALARY = 'teacher_salary', 'راتب مدرس'
+        FIXED_ASSETS = 'fixed_assets', 'شراء أصول ثابتة'
+        MAINTENANCE = 'maintenance', 'مصاريف صيانة'
+        PRINTING = 'printing', 'مصروف طباعة'
+        MEDICAL = 'medical', 'مصروف طبابة'
+        UTILITIES = 'utilities', 'مصروف خدمي'
+        MARKETING = 'marketing', 'تسويق'
+        COPYING = 'copying', 'طباعة'
+        BUFFET = 'buffet', 'بوفيه'
+        MISCELLANEOUS = 'miscellaneous', 'مصاريف متفرقة'
+        GOVERNMENT = 'government', 'مصاريف حكومية'
+        CLEANING = 'cleaning', 'تنظيف'
+
     type = models.CharField(max_length=10, choices=TransactionType.choices)
+    expense_type = models.CharField(
+        max_length=20, 
+        choices=ExpenseCategory.choices, 
+        null=True, 
+        blank=True,
+        verbose_name='نوع المصروف'
+    )
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     date = models.DateField(default=date.today)
     description = models.TextField()
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
-
-    
-    def __str__(self):
-        return f"{self.get_type_display()} - {self.amount} ل.س"
-    
     payment = models.OneToOneField(
         Payment, 
         on_delete=models.SET_NULL, 

@@ -15,6 +15,9 @@
         <a href="{% url 'classroom:assign_students' classroom.id %}" class="btn btn-primary">
             <i class="fas fa-user-plus"></i> إضافة طلاب
         </a>
+        <a href="{% url 'classroom:export_classroom_students' classroom.id %}" class="btn btn-success">
+            <i class="fas fa-file-excel"></i> تصدير إلى Excel
+        </a>
         <a href="{% url 'classroom:classroom' %}" class="btn btn-secondary">
             <i class="fas fa-arrow-left"></i> العودة للشعب
         </a>

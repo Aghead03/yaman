@@ -22,4 +22,5 @@ urlpatterns = [
     path('students/<int:pk>/account/', views.StudentAccountView.as_view(), name='student_account'),
     
     path('reports/', views.reports.as_view(), name="reports"),
+    path('export/', views.ExportView.as_view(), name='export'),
 ]

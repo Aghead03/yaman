@@ -17,7 +17,9 @@ class Grade(models.Model):
         max_digits=5, 
         decimal_places=2, 
         verbose_name=_('العلامة'),
-        validators=[MinValueValidator(0), MaxValueValidator(100)]
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
+        null=True,  # السماح بقيم فارغة
+        blank=True  # السماح بحقول فارغة في النماذج
     )
     exam_type = models.CharField(
         max_length=50, 

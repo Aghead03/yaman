@@ -243,3 +243,67 @@ class AssignToCourseView(View):
             messages.success(request, 'تم تسجيل الطلاب في الدورة بنجاح')
         
         return redirect('classroom:assign_to_course', course_id=course_id)
+    
+    
+    
+    
+import pandas as pd
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404
+import openpyxl
+from openpyxl.styles import Font, Alignment
+
+def export_classroom_students_to_excel(request, classroom_id):
+    # جلب بيانات الشعبة
+    classroom = get_object_or_404(Classroom, id=classroom_id)
+    
+    # جلب طلاب الشعبة فقط
+    students = Student.objects.filter(
+        classroom_enrollments__classroom=classroom
+    ).values('full_name')
+    
+    # تحويل البيانات إلى DataFrame
+    df = pd.DataFrame(list(students))
+    
+    # إضافة عمود الأرقام التسلسلية
+    df.insert(0, '#', range(1, len(df) + 1))
+    
+    # إعادة تسمية الأعمدة بالعربية
+    df.rename(columns={'full_name': 'اسم الطالب'}, inplace=True)
+    
+    # إعداد اسم الملف والاستجابة
+    filename = f"طلاب_{classroom.name}.xlsx"
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    
+    # إنشاء Excel باستخدام pandas
+    with pd.ExcelWriter(response, engine='openpyxl') as writer:
+        df.to_excel(
+            writer, 
+            sheet_name='الطلاب', 
+            index=False,
+            startrow=0
+        )
+        
+        # الحصول على ورقة العمل وتنسيقها
+        worksheet = writer.sheets['الطلاب']
+        
+        # تنسيق الأعمدة (ضبط العرض)
+        for column in worksheet.columns:
+            max_length = 0
+            column_letter = column[0].column_letter
+            for cell in column:
+                try:
+                    if len(str(cell.value)) > max_length:
+                        max_length = len(str(cell.value))
+                except:
+                    pass
+            adjusted_width = min(max_length + 2, 50)
+            worksheet.column_dimensions[column_letter].width = adjusted_width
+        
+        # تنسيق الرأس (جعل الخط عريض ومركز)
+        for cell in worksheet[1]:
+            cell.font = Font(bold=True)
+            cell.alignment = Alignment(horizontal='center', vertical='center')
+    
+    return response

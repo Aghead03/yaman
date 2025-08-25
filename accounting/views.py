@@ -351,6 +351,154 @@ class SettlementCreateView(LoginRequiredMixin, generic.CreateView):
                 form.add_error('amount', 'المبلغ المدخل يجب أن يساوي الرصيد المتبقي')
                 return self.form_invalid(form)
         return super().form_invalid(form)
+import xlwt
+from django.http import HttpResponse
+
+
+class ExportView(LoginRequiredMixin, generic.View):
+    def get(self, request, *args, **kwargs):
+        export_type = request.GET.get('export_type', 'excel')
+        from_date = request.GET.get('from_date')
+        to_date = request.GET.get('to_date')
+        tab = request.GET.get('tab', 'students')
+        
+        # تصفية البيانات حسب الفترة
+        date_filter = Q()
+        if from_date and to_date:
+            try:
+                date_filter = Q(date__range=[from_date, to_date])
+            except (ValueError, TypeError):
+                # معالجة خطأ تنسيق التاريخ
+                pass
+        
+        if tab == 'students':
+            data = self.export_students(date_filter)
+            filename = 'students_report'
+        elif tab == 'payments':
+            data = self.export_payments(date_filter)
+            filename = 'payments_report'
+        elif tab == 'cash':
+            data = self.export_transactions(date_filter)
+            filename = 'cash_flow_report'
+        else:
+            data = self.export_reports(date_filter)
+            filename = 'financial_reports'
+        
+        if export_type == 'excel':
+            return self.export_to_excel(data, filename)
+        elif export_type == 'csv':
+            return self.export_to_csv(data, filename)
+        elif export_type == 'pdf':
+            return self.export_to_pdf(data, filename, request)
+        
+        return HttpResponseRedirect(reverse('accounting:accounting'))
     
+    def export_students(self, date_filter):
+        students = Student.objects.prefetch_related('payments').all()
+        
+        data = []
+        headers = ['اسم الطالب', 'إجمالي المطلوب', 'إجمالي المدفوع', 'الرصيد', 'الحالة']
+        
+        for student in students:
+            # استخدام aggregate للحصول على المجاميع بشكل أكثر كفاءة
+            payments = student.payments.filter(date_filter)
+            total_required = payments.aggregate(total=Sum('required_amount'))['total'] or 0
+            total_paid = payments.aggregate(total=Sum('amount'))['total'] or 0
+            balance = total_required - total_paid
+            status = 'مسدد' if balance <= 0 else 'غير مسدد'
+            
+            data.append([
+                student.full_name,
+                total_required,
+                total_paid,
+                balance,
+                status
+            ])
+        
+        return {'headers': headers, 'data': data, 'title': 'تقرير حسابات الطلاب'}
     
+    def export_payments(self, date_filter):
+        payments = Payment.objects.filter(date_filter).select_related('student')
+        
+        data = []
+        headers = ['رقم الإيصال', 'الطالب', 'نوع الدفعة', 'المبلغ المطلوب', 
+                'المبلغ المدفوع', 'تاريخ الدفع', 'طريقة الدفع', 'الحالة']
+        
+        for payment in payments:
+            data.append([
+                payment.id,
+                payment.student.full_name,
+                payment.get_payment_type_display(),
+                payment.required_amount,
+                payment.amount,
+                payment.date.strftime('%Y-%m-%d'),
+                payment.get_payment_method_display(),
+                'مسدد' if payment.is_full else 'جزئي'
+            ])
+        
+        return {'headers': headers, 'data': data, 'title': 'تقرير الدفعات'}
     
+    def export_transactions(self, date_filter):
+        transactions = Transaction.objects.filter(date_filter).select_related('user')
+        
+        data = []
+        headers = ['التاريخ', 'النوع', 'المبلغ', 'الوصف', 'المستخدم']
+        
+        for transaction in transactions:
+            data.append([
+                transaction.date.strftime('%Y-%m-%d'),
+                transaction.get_type_display(),
+                transaction.amount,
+                transaction.description,
+                transaction.user.username if transaction.user else ''
+            ])
+        
+        return {'headers': headers, 'data': data, 'title': 'تقرير حركة الصندوق'}
+    
+    def export_to_excel(self, data, filename):
+        try:
+            response = HttpResponse(content_type='application/vnd.ms-excel')
+            response['Content-Disposition'] = f'attachment; filename="{filename}.xls"'
+            
+            wb = xlwt.Workbook(encoding='utf-8')
+            ws = wb.add_sheet('Report')
+            
+            # إضافة العنوان
+            title_style = xlwt.XFStyle()
+            title_font = xlwt.Font()
+            title_font.bold = True
+            title_font.height = 16 * 20  # حجم الخط
+            title_style.font = title_font
+            title_style.alignment = xlwt.Alignment()
+            title_style.alignment.horz = xlwt.Alignment.HORZ_CENTER
+            
+            ws.write_merge(0, 0, 0, len(data['headers'])-1, data['title'], title_style)
+            
+            # إضافة الرؤوس
+            header_style = xlwt.XFStyle()
+            header_font = xlwt.Font()
+            header_font.bold = True
+            header_style.font = header_font
+            header_style.alignment = xlwt.Alignment()
+            header_style.alignment.horz = xlwt.Alignment.HORZ_CENTER
+            
+            for col, header in enumerate(data['headers']):
+                ws.write(2, col, header, header_style)
+                # ضبط عرض الأعمدة تلقائياً
+                ws.col(col).width = 256 * (len(str(header)) + 5)
+            
+            # إضافة البيانات
+            for row, row_data in enumerate(data['data'], 3):
+                for col, value in enumerate(row_data):
+                    # تحديد نمط البيانات الرقمية
+                    cell_style = xlwt.XFStyle()
+                    if isinstance(value, (int, float)):
+                        cell_style.num_format_str = '#,##0.00'
+                    ws.write(row, col, value, cell_style)
+            
+            wb.save(response)
+            return response
+            
+        except Exception as e:
+            # معالجة الأخطاء
+            return HttpResponse(f"خطأ في التصدير إلى Excel: {str(e)}")

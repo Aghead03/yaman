@@ -13,5 +13,6 @@ urlpatterns = [
         path('classroom/<int:classroom_id>/delete/', views.DeleteClassroomView.as_view(), name='delete_classroom'),
         path('classroom/<int:classroom_id>/subjects/', views.ClassroomSubjectListView.as_view(), name='classroom_subject_list'),
         path('classroom/<int:classroom_id>/subjects/add/', views.ClassroomSubjectCreateView.as_view(), name='classroom_subject_create'),
+        path('classroom/<int:classroom_id>/students/export/', views.export_classroom_students_to_excel, name='export_classroom_students'),
 
 ]

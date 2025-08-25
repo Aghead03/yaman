@@ -1,0 +1,179 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">الملف الشخصي للمدرس</h4>
+                </div>
+                <div class="card-body">
+                    <!-- المعلومات الأساسية -->
+                    <h5 class="border-bottom pb-2">المعلومات الشخصية</h5>
+                    <div class="row mb-3">
+                        <div class="col-sm-3 fw-bold">الاسم الكامل:</div>
+                        <div class="col-sm-9">{{ teacher.full_name }}</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-3 fw-bold">رقم الهاتف:</div>
+                        <div class="col-sm-9">{{ teacher.phone_number }}</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-3 fw-bold">الفروع:</div>
+                        <div class="col-sm-9">
+                            {% for branch in branches %}
+                                <span class="badge bg-secondary me-1 mb-1">{{ branch }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-3 fw-bold">تاريخ التعيين:</div>
+                        <div class="col-sm-9">{{ teacher.hire_date }}</div>
+                    </div>
+                    {% if teacher.notes %}
+                    <div class="row mb-3">
+                        <div class="col-sm-3 fw-bold">ملاحظات:</div>
+                        <div class="col-sm-9">{{ teacher.notes }}</div>
+                    </div>
+                    {% endif %}
+
+                    <!-- إحصائيات الحضور -->
+                    <h5 class="border-bottom pb-2 mt-4">إحصائيات الحضور</h5>
+                    
+                    <!-- الحضور اليومي -->
+                    <div class="card mb-3">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0">حضور اليوم ({{ today|date:"Y-m-d" }})</h6>
+                        </div>
+                        <div class="card-body">
+                            {% if daily_attendance %}
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <strong>الحالة:</strong>
+                                        <span class="badge {% if daily_attendance.status == 'present' %}bg-success{% elif daily_attendance.status == 'absent' %}bg-danger{% elif daily_attendance.status == 'late' %}bg-warning{% else %}bg-secondary{% endif %}">
+                                            {{ daily_attendance.get_status_display }}
+                                        </span>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <strong>عدد الجلسات:</strong> {{ daily_attendance.session_count }}
+                                    </div>
+                                </div>
+                                {% if daily_attendance.notes %}
+                                <div class="mt-2">
+                                    <strong>ملاحظات:</strong> {{ daily_attendance.notes }}
+                                </div>
+                                {% endif %}
+                            {% else %}
+                                <p class="text-muted mb-0">لا توجد بيانات حضور لهذا اليوم</p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- إحصائيات الشهر -->
+                    <div class="card mb-3">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0">إحصائيات الشهر الحالي</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="text-center">
+                                        <h4 class="text-success">{{ monthly_stats.present_days|default:0 }}</h4>
+                                        <small>أيام حضور</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="text-center">
+                                        <h4 class="text-danger">{{ monthly_stats.absent_days|default:0 }}</h4>
+                                        <small>أيام غياب</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="text-center">
+                                        <h4 class="text-primary">{{ monthly_stats.total_sessions|default:0 }}</h4>
+                                        <small>إجمالي الجلسات</small>
+                                    </div>
+                                </div>
+                            </div>
+                            {% if monthly_stats.total_days %}
+                            <div class="progress mt-3" style="height: 20px;">
+                                <div class="progress-bar bg-success" style="width: {% widthratio monthly_stats.present_days monthly_stats.total_days 100 %}%">
+                                    {% widthratio monthly_stats.present_days monthly_stats.total_days 100 %}%
+                                </div>
+                                <div class="progress-bar bg-danger" style="width: {% widthratio monthly_stats.absent_days monthly_stats.total_days 100 %}%">
+                                    {% widthratio monthly_stats.absent_days monthly_stats.total_days 100 %}%
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- إحصائيات السنة -->
+                    <div class="card mb-3">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0">إحصائيات السنة الحالية</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="text-center">
+                                        <h4 class="text-success">{{ yearly_stats.present_days|default:0 }}</h4>
+                                        <small>أيام حضور</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="text-center">
+                                        <h4 class="text-danger">{{ yearly_stats.absent_days|default:0 }}</h4>
+                                        <small>أيام غياب</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="text-center">
+                                        <h4 class="text-primary">{{ yearly_stats.total_sessions|default:0 }}</h4>
+                                        <small>إجمالي الجلسات</small>
+                                    </div>
+                                </div>
+                            </div>
+                            {% if yearly_stats.total_days %}
+                            <div class="progress mt-3" style="height: 20px;">
+                                <div class="progress-bar bg-success" style="width: {% widthratio yearly_stats.present_days yearly_stats.total_days 100 %}%">
+                                    {% widthratio yearly_stats.present_days yearly_stats.total_days 100 %}%
+                                </div>
+                                <div class="progress-bar bg-danger" style="width: {% widthratio yearly_stats.absent_days yearly_stats.total_days 100 %}%">
+                                    {% widthratio yearly_stats.absent_days yearly_stats.total_days 100 %}%
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- أزرار التنقل -->
+                    <div class="mt-4 d-flex justify-content-between">
+                        <a href="{% url 'employ:teachers' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> العودة إلى القائمة
+                        </a>
+                        <a href="{% url 'attendance:teacher_attendance' %}?teacher={{ teacher.id }}" class="btn btn-info">
+                            <i class="fas fa-history"></i> سجل الحضور الكامل
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.badge {
+    font-size: 0.85em;
+}
+.card-header h6 {
+    font-weight: 600;
+}
+.progress-bar {
+    font-size: 12px;
+    font-weight: bold;
+}
+</style>
+{% endblock %}

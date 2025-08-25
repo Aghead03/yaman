@@ -74,3 +74,43 @@ class Employee(models.Model):
     
     def __str__(self):
         return f"{self.user.get_full_name()} - {self.get_position_display()}"
+    
+    @property
+    def vacations(self):
+        return self.vacation_set.all()
+    
+    
+class Vacation(models.Model):
+    VACATION_TYPES = [
+        ('يومية', 'يومية'),
+        ('طارئة', 'طارئة'),
+        ('مرضية', 'مرضية'),
+    ]
+    
+    STATUS_CHOICES = [
+        ('معلقة', 'معلقة'),
+        ('موافق', 'موافق'),
+        ('غير موافق', 'غير موافق'),
+    ]
+    
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='vacations')
+    vacation_type = models.CharField(max_length=20, choices=VACATION_TYPES, verbose_name='نوع الإجازة')
+    reason = models.TextField(verbose_name='سبب الإجازة')
+    start_date = models.DateField(verbose_name='تاريخ بدء الإجازة')
+    end_date = models.DateField(verbose_name='تاريخ انتهاء الإجازة')
+    submission_date = models.DateField(auto_now_add=True, verbose_name='تاريخ تقديم الطلب')
+    is_replacement_secured = models.BooleanField(default=False, verbose_name='تم تأمين البديل')
+    manager_opinion = models.TextField(blank=True, null=True, verbose_name='رأي المدير')
+    general_manager_opinion = models.TextField(blank=True, null=True, verbose_name='رأي المدير العام')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='معلقة')
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return f"إجازة {self.employee.user.get_full_name()} - {self.get_vacation_type_display()}"
+    
+    class Meta:
+        verbose_name = 'إجازة'
+        verbose_name_plural = 'الإجازات'
+        ordering = ['-created_at']    

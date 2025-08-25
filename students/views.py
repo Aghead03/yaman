@@ -129,3 +129,25 @@ class UpdateStudentView(UserPassesTestMixin, UpdateView):
     def form_invalid(self, form):
         messages.error(self.request, 'حدث خطأ في تعديل البيانات')
         return super().form_invalid(form)    
+    
+    
+    
+class stunum(TemplateView):
+    template_name = 'students/stunum.html'    
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # حساب عدد الطلاب الإجمالي
+        context['students_count'] = Student.objects.count()
+        
+        # حساب عدد الطلاب حسب الجنس
+        context['male_count'] = Student.objects.filter(gender='male').count()
+        context['female_count'] = Student.objects.filter(gender='female').count()
+        
+        # حساب عدد الطلاب حسب الفرع الدراسي
+        context['scientific_count'] = Student.objects.filter(branch='علمي').count()
+        context['literary_count'] = Student.objects.filter(branch='أدبي').count()
+        context['ninth_grade_count'] = Student.objects.filter(branch='تاسع').count()
+        
+        return context

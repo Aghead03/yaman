@@ -1,5 +1,5 @@
 from django import forms
-from .models import Teacher , Employee
+from .models import Teacher , Employee , Vacation
 from django.forms import DateInput
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import Group ,User
@@ -93,3 +93,49 @@ class EmployeeRegistrationForm(UserCreationForm):  # تغيير الوراثة �
             'marketing': 'Marketing',
             'reception': 'Reception',
         }.get(position, 'Employees')
+        
+class VacationForm(forms.ModelForm):
+    class Meta:
+        model = Vacation
+        fields = ['vacation_type', 'reason', 'start_date', 'end_date', 'is_replacement_secured']
+        widgets = {
+            'start_date': DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'end_date': DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'reason': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
+        }
+        labels = {
+            'vacation_type': 'نوع الإجازة',
+            'reason': 'سبب الإجازة',
+            'start_date': 'تاريخ بدء الإجازة',
+            'end_date': 'تاريخ انتهاء الإجازة',
+            'is_replacement_secured': 'تم تأمين البديل',
+        }
+
+class AdminVacationForm(forms.ModelForm):
+    employee = forms.ModelChoiceField(
+        queryset=Employee.objects.all(),
+        label='اختيار الموظف',
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
+    
+    class Meta:
+        model = Vacation
+        fields = ['employee', 'vacation_type', 'reason', 'start_date', 'end_date', 'is_replacement_secured', 'manager_opinion', 'general_manager_opinion', 'status']
+        widgets = {
+            'start_date': DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'end_date': DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'reason': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
+            'manager_opinion': forms.Textarea(attrs={'rows': 2, 'class': 'form-control'}),
+            'general_manager_opinion': forms.Textarea(attrs={'rows': 2, 'class': 'form-control'}),
+            'status': forms.Select(attrs={'class': 'form-control'}),
+        }
+        labels = {
+            'vacation_type': 'نوع الإجازة',
+            'reason': 'سبب الإجازة',
+            'start_date': 'تاريخ بدء الإجازة',
+            'end_date': 'تاريخ انتهاء الإجازة',
+            'is_replacement_secured': 'تم تأمين البديل',
+            'manager_opinion': 'رأي المدير',
+            'general_manager_opinion': 'رأي المدير العام',
+            'status': 'حالة الإجازة',
+        }

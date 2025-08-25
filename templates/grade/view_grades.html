@@ -7,6 +7,12 @@
             <a href="{% url 'grade:edit_grades' classroom.id subject.id %}" class="btn btn-primary">
                 تعديل العلامات
             </a>
+            <a href="{% url 'grade:export_grades_excel' classroom.id subject.id %}" class="btn btn-success">
+                تصدير لإكسل
+            </a>
+            {% comment %} <a href="{% url 'grade:custom_print_grades' classroom.id subject.id %}" class="btn btn-info" target="_blank">
+                طباعة مخصصة
+            </a> {% endcomment %}
             <a href="{% url 'grade:select_subject' classroom.id %}" class="btn btn-secondary">
                 العودة للمواد
             </a>
@@ -20,23 +26,24 @@
             <thead class="thead-dark">
                 <tr>
                     <th>اسم الطالب</th>
-                    <th>نشاط</th>
-                    <th>شهري</th>
+                    <th>1</th>
+                    <th>2</th>
+                    <th>3</th>
                     <th>نصفي</th>
-                    <th>نهائي</th>
+                    <th>المجموع</th>
                     <th>ملاحظات</th>
                 </tr>
             </thead>
             <tbody>
-                {% regroup grades by student as student_grades %}
-                {% for student in student_grades %}
+                {% for data in students_data %}
                 <tr>
-                    <td>{{ student.grouper.full_name }}</td>
-                    <td>{{ student.list|get_grade:'activity' }}</td>
-                    <td>{{ student.list|get_grade:'monthly' }}</td>
-                    <td>{{ student.list|get_grade:'midterm' }}</td>
-                    <td>{{ student.list|get_grade:'final' }}</td>
-                    <td>{{ student.list.0.notes }}</td>
+                    <td>{{ data.student.full_name }}</td>
+                    <td>{{ data.activity.grade|default_if_none:'' }}</td>
+                    <td>{{ data.monthly.grade|default_if_none:'' }}</td>
+                    <td>{{ data.midterm.grade|default_if_none:'' }}</td>
+                    <td>{{ data.final.grade|default_if_none:'' }}</td>
+                    <td><strong>{{ data.total }}</strong></td>
+                    <td>{{ data.activity.notes|default:'' }}</td>
                 </tr>
                 {% endfor %}
             </tbody>

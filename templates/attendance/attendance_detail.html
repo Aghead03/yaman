@@ -7,6 +7,9 @@
         <a href="{% url 'attendance:attendance' %}" class="btn btn-secondary">
             <i class="fas fa-arrow-left"></i> العودة للسجل
         </a>
+        <a href="{% url 'attendance:export_attendance' classroom.id date %}" class="btn btn-success">
+            <i class="fas fa-file-excel"></i> تصدير إلى Excel
+        </a>
     </div>
 </div>
 {% include "partials/_alerts.html" %}

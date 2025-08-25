@@ -54,7 +54,11 @@
                     <tr>
                         {% for teacher in  teacher %}
                         <th>#</th>
-                        <td>{{teacher.full_name}}</td>
+                        <td>
+                            <a href="{% url 'employ:teacher_profile' teacher.pk %}">
+                                {{teacher.full_name}}
+                            </a>
+                        </td>
                         <td>{{teacher.subject}}</td>
                         <td>{{teacher.branches}}</td>
                         <td>{{teacher.contract_type}}</td>
