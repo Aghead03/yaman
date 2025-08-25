@@ -351,6 +351,8 @@ class SettlementCreateView(LoginRequiredMixin, generic.CreateView):
                 form.add_error('amount', 'المبلغ المدخل يجب أن يساوي الرصيد المتبقي')
                 return self.form_invalid(form)
         return super().form_invalid(form)
+    
+    
 import xlwt
 from django.http import HttpResponse
 
